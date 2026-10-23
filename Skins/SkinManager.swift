@@ -7,6 +7,7 @@ final class SkinManager {
     private var textures: [String: MTLTexture] = [:]
     private let lock = NSLock()
     private var device: MTLDevice?
+    private var piaopiaoWalkingTexture: MTLTexture?
 
     static let defaultSkinID = "piaopiao"
     static let skinIDs = [defaultSkinID, "classic", "dog", "tora", "maia", "vaporwave"]
@@ -45,6 +46,13 @@ final class SkinManager {
         return textures[id]
     }
 
+    /// Optional four-phase gait sheet. It is not another selectable companion.
+    func walkingTexture(id: String) -> MTLTexture? {
+        guard id == Self.defaultSkinID || id == "ai-preview" else { return nil }
+        lock.lock(); defer { lock.unlock() }
+        return piaopiaoWalkingTexture
+    }
+
     /// Explicit developer preview: decode synchronously so failures are visible at launch.
     /// This never copies the image into the user's installed skin directory.
     func loadPreviewSkin(from url: URL) throws -> String {
@@ -66,6 +74,9 @@ final class SkinManager {
         textures[id] = texture
         lock.unlock()
         Self.previewAtlasURL = url
+        if url.deletingPathExtension().lastPathComponent == "piaopiao" {
+            loadWalkingTexture(from: url.deletingLastPathComponent().appendingPathComponent("piaopiao-walk.png"))
+        }
         return id
     }
 
@@ -75,6 +86,9 @@ final class SkinManager {
             throw NSError(domain: "PiaoPal.Assets", code: 1, userInfo: [
                 NSLocalizedDescriptionKey: "PiaoPiao's bundled sprite atlas could not be loaded."
             ])
+        }
+        if let url = Bundle.main.url(forResource: "piaopiao-walk", withExtension: "png", subdirectory: "Sprites") {
+            loadWalkingTexture(from: url)
         }
     }
 
@@ -163,6 +177,13 @@ final class SkinManager {
     }
 
     // MARK: – Private
+
+    private func loadWalkingTexture(from url: URL) {
+        guard let dev = device, let texture = gifToTexture(url: url, device: dev),
+              texture.width == 256, texture.height == 512 else { return }
+        lock.lock(); defer { lock.unlock() }
+        piaopiaoWalkingTexture = texture
+    }
 
     private func gifToTexture(url: URL, device: MTLDevice) -> MTLTexture? {
         guard let data = try? Data(contentsOf: url),

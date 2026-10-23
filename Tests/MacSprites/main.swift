@@ -61,6 +61,33 @@ for size in [16, 32, 64, 128, 256, 512, 1024] {
 }
 print("PASS: 32 transparent sprite cells, 17 animation mappings, distinct motion frames, 7 icon sizes")
 
+// The optional gait sheet must be safe to sample at its cell borders and contain
+// four authored phases in every direction; a missing/blank cell is visible in motion.
+let walkURL = repo.appendingPathComponent("Resources/Sprites/piaopiao-walk.png")
+guard let walkSource = CGImageSourceCreateWithURL(walkURL as CFURL, nil),
+      let walkAtlas = CGImageSourceCreateImageAtIndex(walkSource, 0, nil) else {
+    fatalError("PiaoPiao walking atlas is missing or unreadable")
+}
+precondition(walkAtlas.width == 256 && walkAtlas.height == 512)
+for row in 0..<8 {
+    var phases: [[UInt8]] = []
+    for col in 0..<4 {
+        let cell = walkAtlas.cropping(to: CGRect(x: col * 64, y: row * 64, width: 64, height: 64))!
+        let data = bytes(cell)
+        let opaque = stride(from: 3, to: data.count, by: 4).filter { data[$0] > 127 }.count
+        precondition(opaque > 200 && opaque < 3600, "Blank or filled walking cell \(row),\(col)")
+        for y in 0..<64 {
+            for x in 0..<64 where x == 0 || y == 0 || x == 63 || y == 63 {
+                precondition(data[(y * 64 + x) * 4 + 3] < 16,
+                             "Walking sprite touches cell edge: \(row),\(col)")
+            }
+        }
+        precondition(!phases.contains(data), "Repeated walking phase: \(row),\(col)")
+        phases.append(data)
+    }
+}
+print("PASS: 8 directions × 4 distinct walking phases with transparent cell margins")
+
 let manager = SkinManager()
 var missingDeviceFailed = false
 manager.loadSkinFromURL(id: "missing-device", url: atlasURL) { missingDeviceFailed = !$0 }
@@ -80,6 +107,11 @@ if let device = MTLCreateSystemDefaultDevice() {
     precondition(manager.texture(id: "piaopiao")?.width == 512)
     precondition(manager.texture(id: "piaopiao")?.height == 256)
     precondition(manager.texture(id: "invalid") == nil)
+    let previewID = try manager.loadPreviewSkin(from: atlasURL)
+    precondition(manager.walkingTexture(id: previewID)?.width == 256)
+    precondition(manager.walkingTexture(id: previewID)?.height == 512)
+    precondition(manager.walkingTexture(id: "classic") == nil,
+                 "PiaoPiao's walking sheet must not leak into other companions")
     print("PASS: Metal PNG loading and invalid-image failure callbacks")
 } else {
     print("SKIP: Metal texture upload requires a GPU; file/animation checks passed")

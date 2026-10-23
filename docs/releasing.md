@@ -1,6 +1,6 @@
 # PiaoPal 发版说明
 
-首版为 `0.0.1`，仅发布 Mac；安装包包含 arm64 和 x86_64。应用 ID 为 `io.github.sherwinng.PiaoPal`，仓库为 `Sherwin-NG/PiaoPal`。
+当前版本为 `0.0.2`，首版为 `0.0.1`，仅发布 Mac；安装包包含 arm64 和 x86_64，要求 macOS 13+。应用 ID 为 `io.github.sherwinng.PiaoPal`，仓库为 `Sherwin-NG/PiaoPal`。
 
 ## 准备版本
 
@@ -22,19 +22,26 @@ SHA256SUMS.txt
 
 ## GitHub Actions
 
-普通推送与 PR 运行 CI：语言/素材/更新器检查，双架构构建、签名验证、DMG 验证和校验清单生成。CI 保留下载产物，**不会公开发布版本**。
+普通推送与 PR 运行 CI：语言/素材/运动/更新器检查，双架构构建、签名验证、DMG 验证和校验清单生成。CI 保留下载产物，**不会公开发布版本**。
 
 准备好提交后创建匹配版本标签，例如：
 
 ```sh
-git tag v0.0.1
+git tag v0.0.2
 git push origin main
-git push origin v0.0.1
+git push origin v0.0.2
 ```
 
 Release 工作流检查标签与版本、构建和验证两种 Mac 包，然后创建 **GitHub Release 草稿**。手动运行该工作流时，需要输入已存在的标签；构建始终使用该标签对应的提交。
 
-检查草稿的说明、安装体验与完整性后再发布。重复运行只更新草稿；已经公开发布的版本不能被工作流覆盖。修复公开版本时应递增版本并发布新标签。
+检查草稿的说明、安装体验与完整性后，由维护者完成公开发布。已获得正式发版授权时，可在核对通过后执行：
+
+```sh
+gh release edit v0.0.2 --draft=false --latest
+gh release view v0.0.2 --json url,isDraft,isPrerelease,assets
+```
+
+确认版本已公开、不是预发布，并包含 DMG、ZIP 和校验清单。重复运行工作流只更新草稿；已经公开发布的版本不能被工作流覆盖。修复公开版本时应递增版本并发布新标签。
 
 ## 签名与公证
 

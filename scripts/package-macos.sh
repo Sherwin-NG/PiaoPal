@@ -12,7 +12,8 @@ if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ || "$VERSION" != "$SOURCE_VERSION
   echo "Version must match Info.plist ($SOURCE_VERSION); received: $VERSION" >&2
   exit 1
 fi
-BUILD_NUMBER="${BUILD_NUMBER:-1}"
+SOURCE_BUILD_NUMBER="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' Info.plist)"
+BUILD_NUMBER="${BUILD_NUMBER:-$SOURCE_BUILD_NUMBER}"
 if [[ ! "$BUILD_NUMBER" =~ ^[0-9]+$ ]]; then
   echo 'BUILD_NUMBER must be a non-negative integer.' >&2
   exit 1
@@ -49,6 +50,8 @@ cp LICENSE "$APP_PATH/Contents/Resources/LICENSE"
 cp THIRD_PARTY_NOTICES.md "$APP_PATH/Contents/Resources/THIRD_PARTY_NOTICES.md"
 cmp LICENSE "$APP_PATH/Contents/Resources/LICENSE"
 cmp THIRD_PARTY_NOTICES.md "$APP_PATH/Contents/Resources/THIRD_PARTY_NOTICES.md"
+cmp Resources/Sprites/piaopiao.png "$APP_PATH/Contents/Resources/Sprites/piaopiao.png"
+cmp Resources/Sprites/piaopiao-walk.png "$APP_PATH/Contents/Resources/Sprites/piaopiao-walk.png"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$APP_PATH/Contents/Info.plist"
 python3 - "$APP_PATH/Contents/Info.plist" "$VERSION" <<'PY_CHECK'
 import plistlib, sys
@@ -64,6 +67,8 @@ expected = {
 for key, value in expected.items():
     if info.get(key) != value:
         raise SystemExit(f'Incorrect packaged identity: {key}={info.get(key)!r}; expected {value!r}')
+if any(key.startswith('PiaoPalPreview') for key in info):
+    raise SystemExit('Release packages must not contain developer preview settings')
 PY_CHECK
 
 EXECUTABLE="$APP_PATH/Contents/MacOS/PiaoPal"

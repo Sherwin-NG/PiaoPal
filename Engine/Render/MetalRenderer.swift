@@ -80,7 +80,22 @@ final class MetalRenderer: ObservableObject {
 
     private let displayLink = CVDisplayLinkManager()
     private let mouseTracker = MouseTracker()
-    let companion = PetMotion()
+    private let motionAccess = PetMotionAccess()
+    // These values and laserMover are accessed only inside motionAccess, so a
+    // display frame cannot mix a new UI selection with an old animation layout.
+    private struct SimulationSettings {
+        var skinID = SkinManager.defaultSkinID
+        var scale: Float = 1
+        var laserActive = false
+    }
+    private var simulationSettings = SimulationSettings()
+    private struct MotionFrame {
+        var position: SIMD2<Float>
+        var pose: PetAnimationPose
+        var skinID: String
+        var scale: Float
+        var laserPosition: SIMD2<Float>?
+    }
     let skinManager = SkinManager()
     let catStats = CatStats()
 
@@ -158,9 +173,11 @@ final class MetalRenderer: ObservableObject {
 
         // Wire stat callbacks.
         if preview == nil {
-            companion.onStep    = { [weak self] pts in self?.catStats.addDistance(pts) }
-            companion.onNap     = { [weak self] in self?.catStats.recordNap() }
-            companion.onScratch = { [weak self] in self?.catStats.recordScratch() }
+            motionAccess.withMotion { companion in
+                companion.onStep    = { [weak self] pts in self?.catStats.addDistance(pts) }
+                companion.onNap     = { [weak self] in self?.catStats.recordNap() }
+                companion.onScratch = { [weak self] in self?.catStats.recordScratch() }
+            }
         }
 
         try buildPipeline()
@@ -188,32 +205,38 @@ final class MetalRenderer: ObservableObject {
             let savedSpeed = UserDefaults.standard.double(forKey: "cat_speed")
             if savedSpeed > 0 {
                 speedMultiplier = Float(savedSpeed)
-                companion.speedMultiplier = Float(savedSpeed)
             }
         }
 
+        motionAccess.withMotion { companion in
+            companion.speedMultiplier = speedMultiplier
+            simulationSettings.skinID = currentSkinID
+            simulationSettings.scale = catScale
+        }
         startLoop()
     }
 
     func setCatScale(_ scale: Float) {
         catScale = scale
+        motionAccess.withMotion { _ in simulationSettings.scale = scale }
         if !isPreview { UserDefaults.standard.set(Double(scale), forKey: "cat_scale") }
         checkAchievements()
     }
 
     func setSpeedMultiplier(_ v: Float) {
         speedMultiplier = v
-        companion.speedMultiplier = v
+        motionAccess.withMotion { $0.speedMultiplier = v }
         if !isPreview { UserDefaults.standard.set(Double(v), forKey: "cat_speed") }
         checkAchievements()
     }
 
     func setLaserActive(_ active: Bool) {
         laserActive = active
-        if active {
-            laserMover.place(x: companion.posX, y: companion.posY)
-            if !isPreview { catStats.recordLaserSession() }
+        motionAccess.withMotion { companion in
+            simulationSettings.laserActive = active
+            if active { laserMover.place(x: companion.posX, y: companion.posY) }
         }
+        if active && !isPreview { catStats.recordLaserSession() }
         checkAchievements()
     }
 
@@ -244,21 +267,24 @@ final class MetalRenderer: ObservableObject {
         let simX = Float(screenPoint.x - union.minX)
         let simY = Float(union.maxY - screenPoint.y)
 
-        let hitRadius = 32 * catScale
-        guard abs(simX - companion.posX) < hitRadius,
-              abs(simY - companion.posY) < hitRadius else { return }
-
-        if companion.isDockedToMenuBar {
-            companion.wake()
-            dockedSince = nil
-        } else {
-            let now = CACurrentMediaTime()
+        let now = CACurrentMediaTime()
+        let menuBarBottom = Float(NSStatusBar.system.thickness)
+        let action: Int = motionAccess.withMotion { companion in
+            let hitRadius = 32 * simulationSettings.scale
+            guard abs(simX - companion.posX) < hitRadius,
+                  abs(simY - companion.posY) < hitRadius else { return 0 }
+            if companion.isDockedToMenuBar {
+                companion.wake()
+                return 1
+            }
             let isDoubleClick = now - lastClickTime < 0.4
             lastClickTime = now
-            guard isDoubleClick else { return }
-
-            let menuBarBottom = Float(NSStatusBar.system.thickness)
+            guard isDoubleClick else { return 0 }
             companion.dockToMenuBar(targetY: menuBarBottom)
+            return 2
+        }
+        if action == 1 { dockedSince = nil }
+        if action == 2 {
             if !isPreview { catStats.recordDocked() }
             dockedSince = Date()
         }
@@ -273,6 +299,7 @@ final class MetalRenderer: ObservableObject {
     func setSkin(_ id: String) {
         guard skinManager.texture(id: id) != nil else { return }
         currentSkinID = id
+        motionAccess.withMotion { _ in simulationSettings.skinID = id }
         if !isPreview {
             UserDefaults.standard.set(id, forKey: "selected_skin")
             catStats.recordSkinUsed(id)
@@ -296,26 +323,55 @@ final class MetalRenderer: ObservableObject {
     private func tick(dt: Double) {
         // Use the union of all screens so the cat can cross between displays.
         let union = NSScreen.screens.reduce(NSRect.null) { $0.union($1.frame) }
-        companion.screenWidth  = Float(union.width)
-        companion.screenHeight = Float(union.height)
-        laserMover.setScreen(width: Float(union.width), height: Float(union.height))
+        let visible = NSScreen.main?.visibleFrame ?? union
+        let mouse = mouseTracker.position
         let s = NSScreen.main?.backingScaleFactor ?? 1.0
         metalLayer.drawableSize = CGSize(width: union.width * s, height: union.height * s)
+        let frame = motionAccess.withMotion { companion in
+            let settings = simulationSettings
+            let profile = motionProfile(for: settings.skinID)
+            companion.screenWidth = Float(union.width)
+            companion.screenHeight = Float(union.height)
+            companion.profile = profile
+            companion.displayScale = settings.scale
+            companion.walkingAtlasAvailable = skinManager.walkingTexture(id: settings.skinID) != nil
+            laserMover.setScreen(width: Float(union.width), height: Float(union.height))
 
-        if preview?.cyclesAnimations == true {
-            previewElapsed += dt
-        } else if laserActive {
-            laserMover.tick(dt: Float(dt))
-            companion.update(dt: Float(dt), mouseX: laserMover.x, mouseY: laserMover.y)
-        } else {
-            let mouse = mouseTracker.position
-            companion.update(dt: Float(dt), mouseX: mouse.x, mouseY: mouse.y)
+            if preview?.cyclesAnimations == true {
+                previewElapsed += dt
+            } else if settings.laserActive {
+                laserMover.tick(dt: Float(dt))
+                companion.update(dt: Float(dt), mouseX: laserMover.x, mouseY: laserMover.y)
+            } else {
+                companion.update(dt: Float(dt), mouseX: mouse.x, mouseY: mouse.y)
+            }
+            let tour = preview?.cyclesAnimations == true
+                ? previewSprite(in: union, visible: visible, profile: profile,
+                                walkingAtlasAvailable: companion.walkingAtlasAvailable,
+                                displayScale: settings.scale) : nil
+            return MotionFrame(position: tour?.position ?? SIMD2<Float>(companion.posX, companion.posY),
+                               pose: tour?.pose ?? companion.currentPose,
+                               skinID: settings.skinID, scale: settings.scale,
+                               laserPosition: settings.laserActive ? SIMD2<Float>(laserMover.x, laserMover.y) : nil)
         }
-        render(dt: dt)
+        // Metal drawable acquisition can block. Never retain the simulation lock
+        // while drawing, so clicking and changing controls stay responsive.
+        render(dt: dt, frame: frame, union: union)
     }
 
-    /// Use the production UV mapping, cadence and Metal pipeline, without random idle waits.
-    private func previewSprite(in union: NSRect) -> (position: SIMD2<Float>, uv: SIMD4<Float>) {
+    private func motionProfile(for skinID: String) -> PetMotionProfile {
+        if skinID == SkinManager.defaultSkinID { return .piaopiao }
+        if skinID == "ai-preview",
+           skinManager.walkingTexture(id: skinID) != nil
+            || preview?.atlasURL.deletingPathExtension().lastPathComponent == "piaopiao" {
+            return .piaopiao
+        }
+        return .legacy
+    }
+
+    /// Use exactly the same pose and timing implementation as the live pet.
+    private func previewSprite(in union: NSRect, visible: NSRect, profile: PetMotionProfile,
+                               walkingAtlasAvailable: Bool, displayScale: Float) -> (position: SIMD2<Float>, pose: PetAnimationPose) {
         let animations: [Anim] = preview?.walksOnly == true
             ? [.E, .W, .N, .S, .NE, .NW, .SE, .SW]
             : [
@@ -323,26 +379,31 @@ final class MetalRenderer: ObservableObject {
             .sleeping, .scratchSelf, .alert, .tired,
             .scratchWallN, .scratchWallS, .scratchWallE, .scratchWallW
         ]
-        let duration = 2.4
-        let animation = animations[Int(previewElapsed / duration) % animations.count]
-        let interval = animation == .sleeping ? 0.4 : 0.1
-        let frame = Int(previewElapsed.truncatingRemainder(dividingBy: duration) / interval)
-        let visible = NSScreen.main?.visibleFrame ?? union
+        let durations = animations.map { PetAnimationTiming.previewDuration(for: $0, profile: profile) }
+        var elapsed = Float(previewElapsed).truncatingRemainder(dividingBy: durations.reduce(0, +))
+        var selected = animations.count - 1
+        for index in animations.indices {
+            if elapsed < durations[index] { selected = index; break }
+            elapsed -= durations[index]
+        }
+        let pose = PetAnimationTiming.pose(animation: animations[selected], elapsed: elapsed,
+                                           profile: profile,
+                                           walkingAtlasAvailable: walkingAtlasAvailable,
+                                           displayScale: displayScale)
         let position = SIMD2<Float>(Float(visible.midX - union.minX),
                                     Float(union.maxY - visible.midY))
-        return (position, spriteUV(animation, frame: frame))
+        return (position, pose)
     }
 
     // MARK: – Render
 
-    private func render(dt: Double) {
+    private func render(dt: Double, frame: MotionFrame, union: NSRect) {
         guard frameSemaphore.wait(timeout: .now()) == .success else { return }
 
         guard let drawable = metalLayer.nextDrawable() else { frameSemaphore.signal(); return }
         guard let cmdBuf   = commandQueue.makeCommandBuffer() else { frameSemaphore.signal(); return }
         cmdBuf.addCompletedHandler { [weak self] _ in self?.frameSemaphore.signal() }
 
-        let union = NSScreen.screens.reduce(NSRect.null) { $0.union($1.frame) }
         let screenW = Float(union.width  > 0 ? union.width  : 1440)
         let screenH = Float(union.height > 0 ? union.height : 900)
 
@@ -352,12 +413,15 @@ final class MetalRenderer: ObservableObject {
 
         let buf = instanceBuffers[frameIndex]
         let ptr = buf.contents().bindMemory(to: SpriteInstanceGPU.self, capacity: 1)
-        let spriteSize = 64 * catScale
-        let tour = preview?.cyclesAnimations == true ? previewSprite(in: union) : nil
+        let spriteSize = 64 * frame.scale
+        let pose = frame.pose
+        let position = frame.position
+        // Keep the lower edge planted while the authored idle/sleep pose breathes.
+        let anchorOffset = SIMD2<Float>(0, -(pose.scale.y - 1) * spriteSize * 0.5)
         ptr[0] = SpriteInstanceGPU(
-            position: tour?.position ?? SIMD2<Float>(companion.posX, companion.posY),
-            size:     SIMD2<Float>(spriteSize, spriteSize),
-            uvRect:   tour?.uv ?? companion.currentUV
+            position: position + anchorOffset,
+            size:     SIMD2<Float>(spriteSize, spriteSize) * pose.scale,
+            uvRect:   pose.uvRect
         )
 
         let t0 = CACurrentMediaTime()
@@ -379,17 +443,20 @@ final class MetalRenderer: ObservableObject {
 
         // Draw cat
         enc.setVertexBuffer(buf, offset: 0, index: 0)
-        if let tex = skinManager.texture(id: currentSkinID) {
+        let texture = pose.usesWalkingAtlas
+            ? skinManager.walkingTexture(id: frame.skinID)
+            : skinManager.texture(id: frame.skinID)
+        if let tex = texture {
             enc.setFragmentTexture(tex, index: 0)
             enc.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
         }
 
         // Draw laser dot (rendered under/before the cat so cat runs on top)
-        if laserActive, let laserTex = laserTexture {
+        if let laserPosition = frame.laserPosition, let laserTex = laserTexture {
             let laserBuf = laserInstanceBuffers[frameIndex]
             let lptr = laserBuf.contents().bindMemory(to: SpriteInstanceGPU.self, capacity: 1)
             lptr[0] = SpriteInstanceGPU(
-                position: SIMD2<Float>(laserMover.x, laserMover.y),
+                position: laserPosition,
                 size:     SIMD2<Float>(14, 14),
                 uvRect:   SIMD4<Float>(0, 0, 1, 1)
             )
@@ -457,18 +524,14 @@ final class MetalRenderer: ObservableObject {
 
         if !isPreview, achievementCheckAccum >= 15 {
             achievementCheckAccum = 0
-            let laser  = laserActive
-            let scale  = catScale
-            let speed  = speedMultiplier
-            let since  = dockedSince
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
                 let ctx = AchievementContext(
                     stats: self.catStats,
-                    laserActive: laser,
-                    scale: scale,
-                    speedMultiplier: speed,
-                    dockedLongEnough: since.map { Date().timeIntervalSince($0) >= 3600 } ?? false,
+                    laserActive: self.laserActive,
+                    scale: self.catScale,
+                    speedMultiplier: self.speedMultiplier,
+                    dockedLongEnough: self.dockedSince.map { Date().timeIntervalSince($0) >= 3600 } ?? false,
                     hourOfDay: Calendar.current.component(.hour, from: Date())
                 )
                 self.achievementManager.check(context: ctx)

@@ -1,0 +1,7 @@
+PASS: 30 locale cases; 205 English/Simplified/Traditional entries; matching format placeholders; all 7 languages; all 32 achievements; independent PiaoPal catalog; six companion names; nickname preservation
+PASS: 32 transparent sprite cells, 17 animation mappings, distinct motion frames, 7 icon sizes
+PASS: 8 directions × 4 distinct walking phases with transparent cell margins
+PASS: Metal PNG loading and invalid-image failure callbacks
+PASS: responsive continuous movement, readable gait cadence, speed/size/refresh-rate matrix, arrival/turn hysteresis, dock/wake transitions, stable breathing, walking atlas, legacy behavior and serialized UI/display access
+PASS: 0.0.1 version comparison, independent endpoint, safe release link, draft/prerelease exclusion, 404, HTTP errors and malformed JSON
+PASS: PiaoPal macOS localization, sprites, motion, and updater checks.

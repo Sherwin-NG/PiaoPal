@@ -1,0 +1,916 @@
+{
+  "candidate": "candidate-final.png",
+  "candidate_sha256": "4af1828cbcf80daece317ea69afcaa505f58cbbff410bc39d2b30c9af7d6ba41",
+  "verification": {
+    "NE": {
+      "version": "v3",
+      "atlas_row_zero_based": 1,
+      "rgba_equal_reviewed_strip": true,
+      "reviewed_strip": "contact-reviewed-ne-v3-strip.png",
+      "reviewed_strip_sha256": "9a639684799ff95885145edf9e21e566c6e11dceb6c315673d4444ee6ce52d9c"
+    },
+    "SE": {
+      "version": "v4",
+      "atlas_row_zero_based": 3,
+      "rgba_equal_reviewed_strip": true,
+      "reviewed_strip": "contact-reviewed-se-v4-strip.png",
+      "reviewed_strip_sha256": "07be218f6b952672f63c7a4d44049920819425bab84e5e197bfd073714df276b"
+    }
+  },
+  "mirrored_rows_rgba_equal": {
+    "5": true,
+    "7": true
+  },
+  "cardinal_rows_unchanged": {
+    "0": true,
+    "2": true,
+    "4": true,
+    "6": true
+  },
+  "method": "Same-limb sole-center estimate +/-1 source pixel, same reviewed strip pixels verified in final atlas; ideal quarter-cycle world residual = root travel + displayScale * local foot delta. Static PNG analysis, not live playback.",
+  "phase_sequences": {
+    "fore": [
+      "F1",
+      "F2",
+      "F3"
+    ],
+    "hind": [
+      "F0",
+      "F1",
+      "F2"
+    ],
+    "outer_hind": [
+      "F2",
+      "F3",
+      "nextF0"
+    ]
+  },
+  "landmarks": {
+    "NE": {
+      "baseline": {
+        "fore": [
+          [
+            44,
+            57
+          ],
+          [
+            45.5,
+            57
+          ],
+          [
+            44,
+            55
+          ]
+        ],
+        "hind": [
+          [
+            30,
+            59
+          ],
+          [
+            27,
+            59
+          ],
+          [
+            28,
+            59
+          ]
+        ]
+      },
+      "final": {
+        "fore": [
+          [
+            50,
+            51
+          ],
+          [
+            45,
+            52
+          ],
+          [
+            42.5,
+            54
+          ]
+        ],
+        "hind": [
+          [
+            30.5,
+            54
+          ],
+          [
+            28.5,
+            58
+          ],
+          [
+            27,
+            59
+          ]
+        ],
+        "outer_hind": [
+          [
+            13.5,
+            58
+          ],
+          [
+            17.5,
+            59
+          ],
+          [
+            16,
+            59
+          ]
+        ]
+      }
+    },
+    "SE": {
+      "baseline": {
+        "fore": [
+          [
+            42.5,
+            55
+          ],
+          [
+            38,
+            57
+          ],
+          [
+            39,
+            59
+          ]
+        ],
+        "hind": [
+          [
+            24.5,
+            53
+          ],
+          [
+            19.5,
+            53
+          ],
+          [
+            20,
+            57
+          ]
+        ]
+      },
+      "final": {
+        "fore": [
+          [
+            40,
+            53
+          ],
+          [
+            37.5,
+            51
+          ],
+          [
+            35,
+            48
+          ]
+        ],
+        "hind": [
+          [
+            25.5,
+            53
+          ],
+          [
+            20.5,
+            48
+          ],
+          [
+            20.5,
+            45
+          ]
+        ]
+      }
+    }
+  },
+  "metrics": [
+    {
+      "direction": "SE",
+      "scale": 1,
+      "version": "baseline",
+      "limb": "fore",
+      "interval": "F1->F2",
+      "local_foot_delta": [
+        -4.5,
+        2
+      ],
+      "root_delta": [
+        5.65685424949238,
+        5.65685424949238
+      ],
+      "world_foot_delta": [
+        1.1568542494923797,
+        7.65685424949238
+      ],
+      "residual": 7.743754176918201
+    },
+    {
+      "direction": "SE",
+      "scale": 1,
+      "version": "baseline",
+      "limb": "fore",
+      "interval": "F2->F3",
+      "local_foot_delta": [
+        1,
+        2
+      ],
+      "root_delta": [
+        5.65685424949238,
+        5.65685424949238
+      ],
+      "world_foot_delta": [
+        6.65685424949238,
+        7.65685424949238
+      ],
+      "residual": 10.14599061190943
+    },
+    {
+      "direction": "SE",
+      "scale": 1,
+      "version": "baseline",
+      "limb": "hind",
+      "interval": "F0->F1",
+      "local_foot_delta": [
+        -5.0,
+        0
+      ],
+      "root_delta": [
+        5.65685424949238,
+        5.65685424949238
+      ],
+      "world_foot_delta": [
+        0.6568542494923797,
+        5.65685424949238
+      ],
+      "residual": 5.694862378062897
+    },
+    {
+      "direction": "SE",
+      "scale": 1,
+      "version": "baseline",
+      "limb": "hind",
+      "interval": "F1->F2",
+      "local_foot_delta": [
+        0.5,
+        4
+      ],
+      "root_delta": [
+        5.65685424949238,
+        5.65685424949238
+      ],
+      "world_foot_delta": [
+        6.15685424949238,
+        9.65685424949238
+      ],
+      "residual": 11.452584347885477
+    },
+    {
+      "direction": "SE",
+      "scale": 1,
+      "version": "v4",
+      "limb": "fore",
+      "interval": "F1->F2",
+      "local_foot_delta": [
+        -2.5,
+        -2
+      ],
+      "root_delta": [
+        5.65685424949238,
+        5.65685424949238
+      ],
+      "world_foot_delta": [
+        3.1568542494923797,
+        3.6568542494923797
+      ],
+      "residual": 4.830974203467513
+    },
+    {
+      "direction": "SE",
+      "scale": 1,
+      "version": "v4",
+      "limb": "fore",
+      "interval": "F2->F3",
+      "local_foot_delta": [
+        -2.5,
+        -3
+      ],
+      "root_delta": [
+        5.65685424949238,
+        5.65685424949238
+      ],
+      "world_foot_delta": [
+        3.1568542494923797,
+        2.6568542494923797
+      ],
+      "residual": 4.126088129885717
+    },
+    {
+      "direction": "SE",
+      "scale": 1,
+      "version": "v4",
+      "limb": "hind",
+      "interval": "F0->F1",
+      "local_foot_delta": [
+        -5.0,
+        -5
+      ],
+      "root_delta": [
+        5.65685424949238,
+        5.65685424949238
+      ],
+      "world_foot_delta": [
+        0.6568542494923797,
+        0.6568542494923797
+      ],
+      "residual": 0.928932188134524
+    },
+    {
+      "direction": "SE",
+      "scale": 1,
+      "version": "v4",
+      "limb": "hind",
+      "interval": "F1->F2",
+      "local_foot_delta": [
+        0.0,
+        -3
+      ],
+      "root_delta": [
+        5.65685424949238,
+        5.65685424949238
+      ],
+      "world_foot_delta": [
+        5.65685424949238,
+        2.6568542494923797
+      ],
+      "residual": 6.2497099535134994
+    },
+    {
+      "direction": "SE",
+      "scale": 2,
+      "version": "baseline",
+      "limb": "fore",
+      "interval": "F1->F2",
+      "local_foot_delta": [
+        -4.5,
+        2
+      ],
+      "root_delta": [
+        7.071067811865475,
+        7.071067811865475
+      ],
+      "world_foot_delta": [
+        -1.9289321881345254,
+        11.071067811865476
+      ],
+      "residual": 11.237852191648779
+    },
+    {
+      "direction": "SE",
+      "scale": 2,
+      "version": "baseline",
+      "limb": "fore",
+      "interval": "F2->F3",
+      "local_foot_delta": [
+        1,
+        2
+      ],
+      "root_delta": [
+        7.071067811865475,
+        7.071067811865475
+      ],
+      "world_foot_delta": [
+        9.071067811865476,
+        11.071067811865476
+      ],
+      "residual": 14.31268017327243
+    },
+    {
+      "direction": "SE",
+      "scale": 2,
+      "version": "baseline",
+      "limb": "hind",
+      "interval": "F0->F1",
+      "local_foot_delta": [
+        -5.0,
+        0
+      ],
+      "root_delta": [
+        7.071067811865475,
+        7.071067811865475
+      ],
+      "world_foot_delta": [
+        -2.9289321881345254,
+        7.071067811865475
+      ],
+      "residual": 7.653668647301795
+    },
+    {
+      "direction": "SE",
+      "scale": 2,
+      "version": "baseline",
+      "limb": "hind",
+      "interval": "F1->F2",
+      "local_foot_delta": [
+        0.5,
+        4
+      ],
+      "root_delta": [
+        7.071067811865475,
+        7.071067811865475
+      ],
+      "world_foot_delta": [
+        8.071067811865476,
+        15.071067811865476
+      ],
+      "residual": 17.09617561367391
+    },
+    {
+      "direction": "SE",
+      "scale": 2,
+      "version": "v4",
+      "limb": "fore",
+      "interval": "F1->F2",
+      "local_foot_delta": [
+        -2.5,
+        -2
+      ],
+      "root_delta": [
+        7.071067811865475,
+        7.071067811865475
+      ],
+      "world_foot_delta": [
+        2.0710678118654746,
+        3.0710678118654746
+      ],
+      "residual": 3.7041570412742275
+    },
+    {
+      "direction": "SE",
+      "scale": 2,
+      "version": "v4",
+      "limb": "fore",
+      "interval": "F2->F3",
+      "local_foot_delta": [
+        -2.5,
+        -3
+      ],
+      "root_delta": [
+        7.071067811865475,
+        7.071067811865475
+      ],
+      "world_foot_delta": [
+        2.0710678118654746,
+        1.0710678118654746
+      ],
+      "residual": 2.3316320762417773
+    },
+    {
+      "direction": "SE",
+      "scale": 2,
+      "version": "v4",
+      "limb": "hind",
+      "interval": "F0->F1",
+      "local_foot_delta": [
+        -5.0,
+        -5
+      ],
+      "root_delta": [
+        7.071067811865475,
+        7.071067811865475
+      ],
+      "world_foot_delta": [
+        -2.9289321881345254,
+        -2.9289321881345254
+      ],
+      "residual": 4.142135623730951
+    },
+    {
+      "direction": "SE",
+      "scale": 2,
+      "version": "v4",
+      "limb": "hind",
+      "interval": "F1->F2",
+      "local_foot_delta": [
+        0.0,
+        -3
+      ],
+      "root_delta": [
+        7.071067811865475,
+        7.071067811865475
+      ],
+      "world_foot_delta": [
+        7.071067811865475,
+        1.0710678118654746
+      ],
+      "residual": 7.151726103369332
+    },
+    {
+      "direction": "NE",
+      "scale": 1,
+      "version": "baseline",
+      "limb": "fore",
+      "interval": "F1->F2",
+      "local_foot_delta": [
+        1.5,
+        0
+      ],
+      "root_delta": [
+        5.65685424949238,
+        -5.65685424949238
+      ],
+      "world_foot_delta": [
+        7.15685424949238,
+        -5.65685424949238
+      ],
+      "residual": 9.122530501372804
+    },
+    {
+      "direction": "NE",
+      "scale": 1,
+      "version": "baseline",
+      "limb": "fore",
+      "interval": "F2->F3",
+      "local_foot_delta": [
+        -1.5,
+        -2
+      ],
+      "root_delta": [
+        5.65685424949238,
+        -5.65685424949238
+      ],
+      "world_foot_delta": [
+        4.15685424949238,
+        -7.65685424949238
+      ],
+      "residual": 8.712453974024331
+    },
+    {
+      "direction": "NE",
+      "scale": 1,
+      "version": "baseline",
+      "limb": "hind",
+      "interval": "F0->F1",
+      "local_foot_delta": [
+        -3,
+        0
+      ],
+      "root_delta": [
+        5.65685424949238,
+        -5.65685424949238
+      ],
+      "world_foot_delta": [
+        2.6568542494923797,
+        -5.65685424949238
+      ],
+      "residual": 6.2497099535134994
+    },
+    {
+      "direction": "NE",
+      "scale": 1,
+      "version": "baseline",
+      "limb": "hind",
+      "interval": "F1->F2",
+      "local_foot_delta": [
+        1,
+        0
+      ],
+      "root_delta": [
+        5.65685424949238,
+        -5.65685424949238
+      ],
+      "world_foot_delta": [
+        6.65685424949238,
+        -5.65685424949238
+      ],
+      "residual": 8.735771774662199
+    },
+    {
+      "direction": "NE",
+      "scale": 1,
+      "version": "v3",
+      "limb": "fore",
+      "interval": "F1->F2",
+      "local_foot_delta": [
+        -5,
+        1
+      ],
+      "root_delta": [
+        5.65685424949238,
+        -5.65685424949238
+      ],
+      "world_foot_delta": [
+        0.6568542494923797,
+        -4.65685424949238
+      ],
+      "residual": 4.702951095439057
+    },
+    {
+      "direction": "NE",
+      "scale": 1,
+      "version": "v3",
+      "limb": "fore",
+      "interval": "F2->F3",
+      "local_foot_delta": [
+        -2.5,
+        2
+      ],
+      "root_delta": [
+        5.65685424949238,
+        -5.65685424949238
+      ],
+      "world_foot_delta": [
+        3.1568542494923797,
+        -3.6568542494923797
+      ],
+      "residual": 4.830974203467513
+    },
+    {
+      "direction": "NE",
+      "scale": 1,
+      "version": "v3",
+      "limb": "hind",
+      "interval": "F0->F1",
+      "local_foot_delta": [
+        -2.0,
+        4
+      ],
+      "root_delta": [
+        5.65685424949238,
+        -5.65685424949238
+      ],
+      "world_foot_delta": [
+        3.6568542494923797,
+        -1.6568542494923797
+      ],
+      "residual": 4.01469164520657
+    },
+    {
+      "direction": "NE",
+      "scale": 1,
+      "version": "v3",
+      "limb": "hind",
+      "interval": "F1->F2",
+      "local_foot_delta": [
+        -1.5,
+        1
+      ],
+      "root_delta": [
+        5.65685424949238,
+        -5.65685424949238
+      ],
+      "world_foot_delta": [
+        4.15685424949238,
+        -4.65685424949238
+      ],
+      "residual": 6.242253499541499
+    },
+    {
+      "direction": "NE",
+      "scale": 1,
+      "version": "v3",
+      "limb": "outer_hind",
+      "interval": "F2->F3",
+      "local_foot_delta": [
+        4.0,
+        1
+      ],
+      "root_delta": [
+        5.65685424949238,
+        -5.65685424949238
+      ],
+      "world_foot_delta": [
+        9.65685424949238,
+        -4.65685424949238
+      ],
+      "residual": 10.721059905482958
+    },
+    {
+      "direction": "NE",
+      "scale": 1,
+      "version": "v3",
+      "limb": "outer_hind",
+      "interval": "F3->nextF0",
+      "local_foot_delta": [
+        -1.5,
+        0
+      ],
+      "root_delta": [
+        5.65685424949238,
+        -5.65685424949238
+      ],
+      "world_foot_delta": [
+        4.15685424949238,
+        -5.65685424949238
+      ],
+      "residual": 7.019931427836233
+    },
+    {
+      "direction": "NE",
+      "scale": 2,
+      "version": "baseline",
+      "limb": "fore",
+      "interval": "F1->F2",
+      "local_foot_delta": [
+        1.5,
+        0
+      ],
+      "root_delta": [
+        7.071067811865475,
+        -7.071067811865475
+      ],
+      "world_foot_delta": [
+        10.071067811865476,
+        -7.071067811865475
+      ],
+      "residual": 12.305543745450375
+    },
+    {
+      "direction": "NE",
+      "scale": 2,
+      "version": "baseline",
+      "limb": "fore",
+      "interval": "F2->F3",
+      "local_foot_delta": [
+        -1.5,
+        -2
+      ],
+      "root_delta": [
+        7.071067811865475,
+        -7.071067811865475
+      ],
+      "world_foot_delta": [
+        4.071067811865475,
+        -11.071067811865476
+      ],
+      "residual": 11.79585247549879
+    },
+    {
+      "direction": "NE",
+      "scale": 2,
+      "version": "baseline",
+      "limb": "hind",
+      "interval": "F0->F1",
+      "local_foot_delta": [
+        -3,
+        0
+      ],
+      "root_delta": [
+        7.071067811865475,
+        -7.071067811865475
+      ],
+      "world_foot_delta": [
+        1.0710678118654746,
+        -7.071067811865475
+      ],
+      "residual": 7.151726103369332
+    },
+    {
+      "direction": "NE",
+      "scale": 2,
+      "version": "baseline",
+      "limb": "hind",
+      "interval": "F1->F2",
+      "local_foot_delta": [
+        1,
+        0
+      ],
+      "root_delta": [
+        7.071067811865475,
+        -7.071067811865475
+      ],
+      "world_foot_delta": [
+        9.071067811865476,
+        -7.071067811865475
+      ],
+      "residual": 11.501489957716865
+    },
+    {
+      "direction": "NE",
+      "scale": 2,
+      "version": "v3",
+      "limb": "fore",
+      "interval": "F1->F2",
+      "local_foot_delta": [
+        -5,
+        1
+      ],
+      "root_delta": [
+        7.071067811865475,
+        -7.071067811865475
+      ],
+      "world_foot_delta": [
+        -2.9289321881345254,
+        -5.071067811865475
+      ],
+      "residual": 5.856139728116858
+    },
+    {
+      "direction": "NE",
+      "scale": 2,
+      "version": "v3",
+      "limb": "fore",
+      "interval": "F2->F3",
+      "local_foot_delta": [
+        -2.5,
+        2
+      ],
+      "root_delta": [
+        7.071067811865475,
+        -7.071067811865475
+      ],
+      "world_foot_delta": [
+        2.0710678118654746,
+        -3.0710678118654746
+      ],
+      "residual": 3.7041570412742275
+    },
+    {
+      "direction": "NE",
+      "scale": 2,
+      "version": "v3",
+      "limb": "hind",
+      "interval": "F0->F1",
+      "local_foot_delta": [
+        -2.0,
+        4
+      ],
+      "root_delta": [
+        7.071067811865475,
+        -7.071067811865475
+      ],
+      "world_foot_delta": [
+        3.0710678118654746,
+        0.9289321881345254
+      ],
+      "residual": 3.208484457688488
+    },
+    {
+      "direction": "NE",
+      "scale": 2,
+      "version": "v3",
+      "limb": "hind",
+      "interval": "F1->F2",
+      "local_foot_delta": [
+        -1.5,
+        1
+      ],
+      "root_delta": [
+        7.071067811865475,
+        -7.071067811865475
+      ],
+      "world_foot_delta": [
+        4.071067811865475,
+        -5.071067811865475
+      ],
+      "residual": 6.503024056648202
+    },
+    {
+      "direction": "NE",
+      "scale": 2,
+      "version": "v3",
+      "limb": "outer_hind",
+      "interval": "F2->F3",
+      "local_foot_delta": [
+        4.0,
+        1
+      ],
+      "root_delta": [
+        7.071067811865475,
+        -7.071067811865475
+      ],
+      "world_foot_delta": [
+        15.071067811865476,
+        -5.071067811865475
+      ],
+      "residual": 15.90134628710367
+    },
+    {
+      "direction": "NE",
+      "scale": 2,
+      "version": "v3",
+      "limb": "outer_hind",
+      "interval": "F3->nextF0",
+      "local_foot_delta": [
+        -1.5,
+        0
+      ],
+      "root_delta": [
+        7.071067811865475,
+        -7.071067811865475
+      ],
+      "world_foot_delta": [
+        4.071067811865475,
+        -7.071067811865475
+      ],
+      "residual": 8.159264251683918
+    }
+  ],
+  "limits": [
+    "NE outer hind remains nearly static and F2->F3 moves right, contrary to stance recoil.",
+    "Four held poses do not continuously lock feet.",
+    "1x at160pt/s is capped5Hz; effective32pt/cycle vs20px authored cycle.",
+    "SE hind F1->F2 has no horizontal recoil and is worse than SEv3 in that segment."
+  ]
+}

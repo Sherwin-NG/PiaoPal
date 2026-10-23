@@ -1,0 +1,717 @@
+{
+  "schemaVersion": 1,
+  "width": 256,
+  "height": 512,
+  "cellSize": 64,
+  "notes": [
+    "Four columns of 64px phases; row order N, NE, E, SE, S, SW, W, NW.",
+    "Source paths are relative to this manifest. Crop and anchor coordinates are source pixels; output anchors are cell pixels.",
+    "Nearest-neighbor rectangular cropping, shared per-direction scale, translation and optional horizontal mirror preserve the source RGBA. No frame synthesis or painting."
+  ],
+  "frames": [
+    {
+      "direction": "N",
+      "phase": 0,
+      "row": 0,
+      "source": "../motion-v4/n-k0.png",
+      "crop": [
+        156,
+        86,
+        265,
+        504
+      ],
+      "sourceAnchor": [
+        288,
+        587
+      ],
+      "outputAnchor": [
+        32,
+        60
+      ],
+      "scale": 0.1,
+      "mirror": false
+    },
+    {
+      "direction": "N",
+      "phase": 1,
+      "row": 0,
+      "source": "../motion-v4/n-k1.png",
+      "crop": [
+        155,
+        87,
+        263,
+        503
+      ],
+      "sourceAnchor": [
+        286,
+        587
+      ],
+      "outputAnchor": [
+        32,
+        60
+      ],
+      "scale": 0.1,
+      "mirror": false
+    },
+    {
+      "direction": "N",
+      "phase": 2,
+      "row": 0,
+      "source": "../motion-v4/n-k0.png",
+      "crop": [
+        156,
+        86,
+        265,
+        504
+      ],
+      "sourceAnchor": [
+        288,
+        587
+      ],
+      "outputAnchor": [
+        32,
+        60
+      ],
+      "scale": 0.1,
+      "mirror": true
+    },
+    {
+      "direction": "N",
+      "phase": 3,
+      "row": 0,
+      "source": "../motion-v4/n-k3.png",
+      "crop": [
+        127,
+        86,
+        262,
+        504
+      ],
+      "sourceAnchor": [
+        257,
+        586
+      ],
+      "outputAnchor": [
+        32,
+        60
+      ],
+      "scale": 0.1,
+      "mirror": false
+    },
+    {
+      "direction": "NE",
+      "phase": 0,
+      "row": 1,
+      "source": "ne-v3-k0.png",
+      "crop": [
+        450,
+        145,
+        873,
+        779
+      ],
+      "sourceAnchor": [
+        800,
+        921
+      ],
+      "outputAnchor": [
+        28,
+        60
+      ],
+      "scale": 0.054,
+      "mirror": false
+    },
+    {
+      "direction": "NE",
+      "phase": 1,
+      "row": 1,
+      "source": "ne-v3-k1.png",
+      "crop": [
+        243,
+        148,
+        889,
+        752
+      ],
+      "sourceAnchor": [
+        601,
+        921
+      ],
+      "outputAnchor": [
+        28,
+        60
+      ],
+      "scale": 0.054,
+      "mirror": false
+    },
+    {
+      "direction": "NE",
+      "phase": 2,
+      "row": 1,
+      "source": "ne-v3-k2.png",
+      "crop": [
+        451,
+        66,
+        873,
+        770
+      ],
+      "sourceAnchor": [
+        800,
+        837
+      ],
+      "outputAnchor": [
+        28,
+        60
+      ],
+      "scale": 0.054,
+      "mirror": false
+    },
+    {
+      "direction": "NE",
+      "phase": 3,
+      "row": 1,
+      "source": "ne-v3-k3.png",
+      "crop": [
+        250,
+        65,
+        882,
+        777
+      ],
+      "sourceAnchor": [
+        604,
+        838
+      ],
+      "outputAnchor": [
+        28,
+        60
+      ],
+      "scale": 0.054,
+      "mirror": false
+    },
+    {
+      "direction": "E",
+      "phase": 0,
+      "row": 2,
+      "source": "../motion-v4/e-k0.png",
+      "crop": [
+        165,
+        392,
+        842,
+        655
+      ],
+      "sourceAnchor": [
+        588,
+        1055
+      ],
+      "outputAnchor": [
+        32,
+        60
+      ],
+      "scale": 0.064,
+      "mirror": false
+    },
+    {
+      "direction": "E",
+      "phase": 1,
+      "row": 2,
+      "source": "../motion-v4/e-k1-v2.png",
+      "crop": [
+        167,
+        402,
+        838,
+        657
+      ],
+      "sourceAnchor": [
+        587,
+        1055
+      ],
+      "outputAnchor": [
+        32,
+        60
+      ],
+      "scale": 0.064,
+      "mirror": false
+    },
+    {
+      "direction": "E",
+      "phase": 2,
+      "row": 2,
+      "source": "../motion-v4/e-k2.png",
+      "crop": [
+        168,
+        388,
+        850,
+        670
+      ],
+      "sourceAnchor": [
+        597,
+        1061
+      ],
+      "outputAnchor": [
+        32,
+        60
+      ],
+      "scale": 0.064,
+      "mirror": false
+    },
+    {
+      "direction": "E",
+      "phase": 3,
+      "row": 2,
+      "source": "../motion-v4/e-k3-v2.png",
+      "crop": [
+        165,
+        406,
+        843,
+        661
+      ],
+      "sourceAnchor": [
+        588,
+        1081
+      ],
+      "outputAnchor": [
+        32,
+        60
+      ],
+      "scale": 0.064,
+      "mirror": false
+    },
+    {
+      "direction": "SE",
+      "phase": 0,
+      "row": 3,
+      "source": "se-v4-k0.png",
+      "crop": [
+        328,
+        137,
+        1011,
+        892
+      ],
+      "sourceAnchor": [
+        820,
+        1056
+      ],
+      "outputAnchor": [
+        32,
+        55
+      ],
+      "scale": 0.047,
+      "mirror": false
+    },
+    {
+      "direction": "SE",
+      "phase": 1,
+      "row": 3,
+      "source": "se-v4-k1.png",
+      "crop": [
+        186,
+        140,
+        989,
+        921
+      ],
+      "sourceAnchor": [
+        657,
+        1057
+      ],
+      "outputAnchor": [
+        32,
+        55
+      ],
+      "scale": 0.047,
+      "mirror": false
+    },
+    {
+      "direction": "SE",
+      "phase": 2,
+      "row": 3,
+      "source": "se-v4-k2.png",
+      "crop": [
+        317,
+        75,
+        1022,
+        855
+      ],
+      "sourceAnchor": [
+        813,
+        995
+      ],
+      "outputAnchor": [
+        32,
+        55
+      ],
+      "scale": 0.047,
+      "mirror": false
+    },
+    {
+      "direction": "SE",
+      "phase": 3,
+      "row": 3,
+      "source": "se-v4-k3.png",
+      "crop": [
+        205,
+        77,
+        1006,
+        912
+      ],
+      "sourceAnchor": [
+        689,
+        1003
+      ],
+      "outputAnchor": [
+        32,
+        55
+      ],
+      "scale": 0.047,
+      "mirror": false
+    },
+    {
+      "direction": "S",
+      "phase": 0,
+      "row": 4,
+      "source": "../motion-v4/s-k0.png",
+      "crop": [
+        157,
+        107,
+        273,
+        510
+      ],
+      "sourceAnchor": [
+        286,
+        614
+      ],
+      "outputAnchor": [
+        32,
+        60
+      ],
+      "scale": 0.1,
+      "mirror": false
+    },
+    {
+      "direction": "S",
+      "phase": 1,
+      "row": 4,
+      "source": "../motion-v4/s-k1.png",
+      "crop": [
+        158,
+        107,
+        272,
+        511
+      ],
+      "sourceAnchor": [
+        286,
+        614
+      ],
+      "outputAnchor": [
+        32,
+        60
+      ],
+      "scale": 0.1,
+      "mirror": false
+    },
+    {
+      "direction": "S",
+      "phase": 2,
+      "row": 4,
+      "source": "../motion-v4/s-k2.png",
+      "crop": [
+        112,
+        107,
+        273,
+        511
+      ],
+      "sourceAnchor": [
+        240,
+        614
+      ],
+      "outputAnchor": [
+        32,
+        60
+      ],
+      "scale": 0.1,
+      "mirror": false
+    },
+    {
+      "direction": "S",
+      "phase": 3,
+      "row": 4,
+      "source": "../motion-v4/s-k3.png",
+      "crop": [
+        113,
+        107,
+        272,
+        510
+      ],
+      "sourceAnchor": [
+        241,
+        614
+      ],
+      "outputAnchor": [
+        32,
+        60
+      ],
+      "scale": 0.1,
+      "mirror": false
+    },
+    {
+      "direction": "SW",
+      "phase": 0,
+      "row": 5,
+      "source": "se-v4-k0.png",
+      "crop": [
+        328,
+        137,
+        1011,
+        892
+      ],
+      "sourceAnchor": [
+        820,
+        1056
+      ],
+      "outputAnchor": [
+        32,
+        55
+      ],
+      "scale": 0.047,
+      "mirror": true
+    },
+    {
+      "direction": "SW",
+      "phase": 1,
+      "row": 5,
+      "source": "se-v4-k1.png",
+      "crop": [
+        186,
+        140,
+        989,
+        921
+      ],
+      "sourceAnchor": [
+        657,
+        1057
+      ],
+      "outputAnchor": [
+        32,
+        55
+      ],
+      "scale": 0.047,
+      "mirror": true
+    },
+    {
+      "direction": "SW",
+      "phase": 2,
+      "row": 5,
+      "source": "se-v4-k2.png",
+      "crop": [
+        317,
+        75,
+        1022,
+        855
+      ],
+      "sourceAnchor": [
+        813,
+        995
+      ],
+      "outputAnchor": [
+        32,
+        55
+      ],
+      "scale": 0.047,
+      "mirror": true
+    },
+    {
+      "direction": "SW",
+      "phase": 3,
+      "row": 5,
+      "source": "se-v4-k3.png",
+      "crop": [
+        205,
+        77,
+        1006,
+        912
+      ],
+      "sourceAnchor": [
+        689,
+        1003
+      ],
+      "outputAnchor": [
+        32,
+        55
+      ],
+      "scale": 0.047,
+      "mirror": true
+    },
+    {
+      "direction": "W",
+      "phase": 0,
+      "row": 6,
+      "source": "../motion-v4/e-k0.png",
+      "crop": [
+        165,
+        392,
+        842,
+        655
+      ],
+      "sourceAnchor": [
+        588,
+        1055
+      ],
+      "outputAnchor": [
+        32,
+        60
+      ],
+      "scale": 0.064,
+      "mirror": true
+    },
+    {
+      "direction": "W",
+      "phase": 1,
+      "row": 6,
+      "source": "../motion-v4/e-k1-v2.png",
+      "crop": [
+        167,
+        402,
+        838,
+        657
+      ],
+      "sourceAnchor": [
+        587,
+        1055
+      ],
+      "outputAnchor": [
+        32,
+        60
+      ],
+      "scale": 0.064,
+      "mirror": true
+    },
+    {
+      "direction": "W",
+      "phase": 2,
+      "row": 6,
+      "source": "../motion-v4/e-k2.png",
+      "crop": [
+        168,
+        388,
+        850,
+        670
+      ],
+      "sourceAnchor": [
+        597,
+        1061
+      ],
+      "outputAnchor": [
+        32,
+        60
+      ],
+      "scale": 0.064,
+      "mirror": true
+    },
+    {
+      "direction": "W",
+      "phase": 3,
+      "row": 6,
+      "source": "../motion-v4/e-k3-v2.png",
+      "crop": [
+        165,
+        406,
+        843,
+        661
+      ],
+      "sourceAnchor": [
+        588,
+        1081
+      ],
+      "outputAnchor": [
+        32,
+        60
+      ],
+      "scale": 0.064,
+      "mirror": true
+    },
+    {
+      "direction": "NW",
+      "phase": 0,
+      "row": 7,
+      "source": "ne-v3-k0.png",
+      "crop": [
+        450,
+        145,
+        873,
+        779
+      ],
+      "sourceAnchor": [
+        800,
+        921
+      ],
+      "outputAnchor": [
+        28,
+        60
+      ],
+      "scale": 0.054,
+      "mirror": true
+    },
+    {
+      "direction": "NW",
+      "phase": 1,
+      "row": 7,
+      "source": "ne-v3-k1.png",
+      "crop": [
+        243,
+        148,
+        889,
+        752
+      ],
+      "sourceAnchor": [
+        601,
+        921
+      ],
+      "outputAnchor": [
+        28,
+        60
+      ],
+      "scale": 0.054,
+      "mirror": true
+    },
+    {
+      "direction": "NW",
+      "phase": 2,
+      "row": 7,
+      "source": "ne-v3-k2.png",
+      "crop": [
+        451,
+        66,
+        873,
+        770
+      ],
+      "sourceAnchor": [
+        800,
+        837
+      ],
+      "outputAnchor": [
+        28,
+        60
+      ],
+      "scale": 0.054,
+      "mirror": true
+    },
+    {
+      "direction": "NW",
+      "phase": 3,
+      "row": 7,
+      "source": "ne-v3-k3.png",
+      "crop": [
+        250,
+        65,
+        882,
+        777
+      ],
+      "sourceAnchor": [
+        604,
+        838
+      ],
+      "outputAnchor": [
+        28,
+        60
+      ],
+      "scale": 0.054,
+      "mirror": true
+    }
+  ]
+}

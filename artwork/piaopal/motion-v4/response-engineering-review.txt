@@ -1,0 +1,27 @@
+Independent movement engineering QA — FINAL PASS
+Scope: production PetMotion.swift, standalone deterministic simulation; no claim of live animation viewing or anatomical/art approval.
+Source SHA-256: 8044c25ce115c83d035f2830fe7ddcacb1d88d53621b0fd0693c3caf563cdb09
+Independent harness: build/peer-comparison-current/speed-qa/main.swift
+Raw evidence: build/peer-comparison-current/speed-qa/results-final.json
+
+48 combinations: 30/60/120 Hz; display scales 0.5, 1, 2, 3; speed multipliers 0.4, 1, 2.5, 3. All assertions passed.
+Checks: requested steady speed; all four authored walk phases visible; per-display-frame gait advance <= 5/fps; alert-to-first-movement latency; continuous 180-degree reversal without idle/alert injection; stable arrival and 48/60-point hysteresis; dock-to-tired-to-sleep; no wake-position snap; finite braking.
+
+Observable measurements:
+- Steady velocity: 64 through 480 points/second, as requested by 160 × multiplier. Default 160 points/second matches legacy default displacement rate.
+- First movement after distant target: 0.1167–0.1333 seconds, depending on display frame quantization.
+- 180-degree reversal first backward movement: 0.1083–0.1333 seconds in every tested combination.
+- Maximum forward drift while reversing: 18.333 points through multiplier 2.5; 22.000 points at multiplier 3.
+- Final distance to follow target: 48.226–48.240 points; no movement when target subsequently stays 55 points away.
+- Maximum phase advance at 30 Hz: 0.16666675 cycles (1/6 plus Float tolerance); all four phases visited.
+- A 90-degree turn at multiplier 2.5 ends at exactly equal Float positions in 30/60/120 Hz simulations.
+- Arrival finite-difference deceleration stays below 1.03 × the configured 1600 × multiplier plus 2 points/second² numerical tolerance, including multiplier 3.
+
+Issues caught and corrected during this review:
+- Zero velocity during an exact 180-degree reversal was being treated as arrival, inserting idle and alert and delaying movement to 0.217–0.233 seconds at default speed. Final code distinguishes actual screen clamping from zero velocity and keeps the movement state.
+- Scaling acceleration linearly with the speed multiplier retains a consistent ~0.1-second acceleration interval and controls high-multiplier turns and arrivals.
+
+Limits:
+- The five-cycle/second cap preserves readable phase sampling but deliberately decouples gait distance from world travel above that limit. It is not a claim of foot locking; visible ground sliding remains possible, especially small sprites and high multipliers.
+- Current 2× default-speed preview is uncapped: 4 cycles/second (0.25-second cycle, 62.5ms per authored phase). Default 1× is capped at 5 cycles/second.
+- This is deterministic engineering verification, not validation of aesthetic quality, continuous on-screen motion, dropped display callbacks, or subjective perceived speed.

@@ -1,6 +1,6 @@
 # PiaoPal 开发说明
 
-首版版本为 `0.0.1`，支持 macOS 13+、Apple Silicon 与 Intel。本仓库只包含 Mac 应用。
+当前版本为 `0.0.2`，支持 macOS 13+、Apple Silicon 与 Intel。本仓库只包含 Mac 应用。
 
 ## 项目结构
 
@@ -13,7 +13,7 @@
 | `Resources/Assets.xcassets/` | 应用图标 |
 | `Resources/companion-catalog.json` | 宠物目录 |
 | `artwork/piaopal/` | 飘飘生成原图、提示词和裁切清单 |
-| `Tests/` | 语言、素材、更新器的针对性检查 |
+| `Tests/` | 语言、素材、运动状态和更新器的针对性检查 |
 | `Tools/` | 素材打包和动画预览工具 |
 | `project.yml` | XcodeGen 工程定义 |
 
@@ -23,10 +23,10 @@ Xcode 工程、target、scheme、product 和 Swift package 均命名为 `PiaoPal
 
 ```sh
 bash scripts/test-macos.sh
-bash scripts/package-macos.sh 0.0.1
+bash scripts/package-macos.sh 0.0.2
 ```
 
-测试在独立临时目录编译并运行，不以测试数据覆盖真实用户设置。它们检查语言识别与格式占位符、成就文案、素材尺寸与动画映射、图标，以及更新器的版本比较和错误处理。
+测试在独立临时目录编译并运行，不以测试数据覆盖真实用户设置。它们检查语言识别与格式占位符、成就文案、素材尺寸与动画映射、图标、运动状态与步态时序，以及更新器的版本比较和错误处理。
 
 打包脚本调用 `PiaoPal.xcodeproj` 的 `PiaoPal` scheme，构建 Apple Silicon 与 Intel，进行 ad-hoc 签名，并输出 DMG、ZIP 和 `SHA256SUMS.txt`。每次运行使用新的暂存目录，已有产物不会作为输入。
 
@@ -46,6 +46,7 @@ xcodegen generate
 
 - 图标提供 16–1024px 的 Mac 尺寸。
 - 飘飘精灵表为 512×256px、8×4 格、每格 64px，共 32 帧，映射到 17 个运动状态。
+- 飘飘另有 `piaopiao-walk.png` 步态表：256×512px、4×8 格，每方向四帧；方向行依次为 N、NE、E、SE、S、SW、W、NW。原来的坐姿、睡姿和界面预览图保持不变。
 - 原有五款精灵表为 256×128px、每格 32px，继续由同一渲染器加载。
 - 原始照片不随仓库分发；生成源图、实际提示词和裁切清单位于 `artwork/piaopal/`。
 
@@ -61,6 +62,25 @@ xcrun swiftc Engine/Simulation/PetMotion.swift Tools/PreviewPiaoPalSprites/main.
 ```
 
 `build/piaopal-motion/piaopiao-motion-review.gif` 是状态动画预览，`piaopiao-state-review.png` 是静态状态表。`scripts/preview-ai-pet.sh` 可用独立预览身份运行 Metal 动画，避免修改正式应用设置。
+
+当前四帧步态的实际依赖源图、提示词、打包清单与审核记录收录于 `artwork/piaopal/motion-v5/`；`motion-v4/` 保留继承的四个正方向源图及历史终审记录。完整 `motion-v3/` 目录与未采用退稿仅保留在制作机器本地，不上传源码仓库。v5 只修订斜向，采用 NE 内部第三稿与 SE 内部第四稿，其他候选不参与生产。重新打包及生成与旧角色的对比：
+
+```sh
+mkdir -p build/animation-audit
+xcrun swiftc Tools/PreparePiaoPalWalk/main.swift -o build/prepare-piaopal-walk
+build/prepare-piaopal-walk artwork/piaopal/motion-v5/walk-manifest.json Resources/Sprites/piaopiao-walk.png
+cp -n Resources/Sprites/piaopiao.png build/animation-audit/before-piaopiao.png
+xcrun swiftc Engine/Simulation/PetMotion.swift Tools/ReviewPetMotion/main.swift -o build/review-pet-motion
+build/review-pet-motion .
+```
+
+`build/animation-audit/index.html` 提供同步播放、逐帧及大小控制，`motion-comparison.gif` 提供可直接查看的对比。工具复用生产 `PetAnimationTiming`，完整运动和状态转换另由 `Tests/MacMotion` 检查。飘飘使用连续位移与距离驱动步频，待机和睡眠在原始帧上缓慢呼吸；其它角色保留原有运动配置。素材打包仅裁切、缩放、平移和镜像，保留裁切范围内的原始透明度。
+
+当前飘飘的基准速度为 160pt/s，继续乘以用户设置的速度倍率；原 v4 的 64pt/s 已由响应优化替换。完整步长为 `20 × displayScale` pt，步态最高 5 循环/s。低速按实际位移推进步态；达到上限后仍保持用户指定速度，因此小尺寸或高速下的残余滑移更明显。四帧素材不提供连续足锁，NE/NW 外侧后腿仍有保守伸收和拖步。
+
+正式应用继续读取并保存用户的大小、速度和角色设置。独立桌面预览使用 2×显示、1×速度，循环状态预览使用 3×显示；这些预览配置不是正式版的默认设置，也不覆盖正式偏好。
+
+真实平移复查命令：`build/review-pet-motion . build/moving-review --moving-only --cycles 10`。输出包含 1×/2× GIF、每次换帧 PNG 与世界坐标 JSON；查看 GIF 首帧不等于观看动态。各方向的接地质量、审核记录与四帧局限见 [动画验收说明](animation-review.md)。
 
 ## 数据和网络
 
