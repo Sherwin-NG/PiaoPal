@@ -1,0 +1,45 @@
+{
+  "project": "飘伴 PiaoPal",
+  "approved_direction": "A illustration icon; B pixel pet; slogan not selected",
+  "generation_tool": "image_gen.imagegen (built-in)",
+  "references": [
+    "a-piaopiao-illustration.png",
+    "530043F5-8888-4A6D-AC9D-05469BAB2297_1_105_c.jpeg",
+    "8A5F62B0-42F7-4ED8-AE18-C0C1CF1FB9BC_1_105_c.jpeg"
+  ],
+  "steps": [
+    {
+      "purpose": "Initial generation",
+      "prompt": "Use case: logo-brand.\nAsset type: final native macOS application icon for the desktop-cat app 飘伴 PiaoPal. A single production icon asset only, no contact sheet, no presentation board.\nInput references: Image 1 is the approved illustration style board; use ONLY the large rounded-square cat-face icon in its upper center as the art-direction reference, ignore all text, all layouts and other elements. Image 2 and Image 3 are identity references for the same real female cat named 飘飘; preserve her round face, short silver-white dense fur, subtle cool gray forehead stripes, large yellow-green eyes with dark rims, pink-brown nose, upright rounded triangular ears, white cheeks/chest.\nPrimary request: create one polished, beautifully hand-illustrated cat portrait in the approved A style. Fine soft fur brushstrokes, softly defined shapes, warm ivory fur highlights, subtle gray markings, calm alert expression. Cat face nearly frontal with very slight three-quarter turn, both ears fully visible. The portrait should strongly resemble the supplied real cat and the A icon, with a readable expressive face at small sizes.\nComposition: 1024 by 1024 square PNG canvas. True transparent outer canvas; centered rounded-square macOS icon body occupying about 82% of canvas width and height, from approximately x=92 to 932 and y=92 to 932. Large smooth rounded corners. Sage green #87917B background fills the rounded-square body only. Cat head and upper white chest fill most of the green body; ears remain comfortably inside the green rounded-square, chest crops cleanly at bottom of body. Clean alpha edge, no white rectangle outside icon. No extra objects.\nStyle: refined illustrated raster artwork, high-quality application icon, not photography, not 3D toy, not pixel art. Balanced symmetry, gentle restrained depth, minimal or no drop shadow.\nText: absolutely no text, no brand name, no letters, no numbers, no watermark.\nAvoid: grid, frame, mockup, macOS window, phone, multiple variants, collar, bow, crown, blush, orange fur, blue eyes, excessive black tiger stripes, fangs, long fluffy fur, giant ears.",
+      "source_output": "exec-dc1bc8f1-1748-408f-957e-e7b19d26d121.png"
+    },
+    {
+      "purpose": "Clean transparent outer silhouette",
+      "prompt": "Use case: precise-object-edit / background-extraction.\nImage 1 is the edit target: a single application icon of the user's silver-white cat.\nMake exactly one correction: clean and regularize the OUTER silhouette of the icon into a perfect smooth rounded square on genuine transparency. Remove all stray neon green, white, yellow, red and gray pixels, tufts, flecks, dirt, blobs and halos outside the rounded-square body, especially along the bottom and top edges. All pixels outside the smooth rounded-square boundary must have alpha 0. Keep inside the icon opaque.\nRetain the same cat portrait, exact eyes, nose, forehead stripes, ears, expression, soft illustrated fur, sage green background, and overall composition. Do not reimagine the cat or add any element.\nProduction geometry: output a 1024×1024 square transparent PNG; center the clean rounded-square body at about 82% of the canvas width and height, with consistent 9% clear transparent margins. Rounded corners like a modern native macOS application icon. No outer shadow. No artifacts.\nNo text, logo, label, mockup, border, checkerboard drawing or extra graphics.",
+      "source_output": "exec-d305851c-982b-4957-a3c8-81f8bd915818.png",
+      "selected": true
+    }
+  ],
+  "files": {
+    "source": "piaopal-icon-source.png",
+    "resized_1024": "piaopal-icon-1024.png"
+  },
+  "production_preparation": "Original selected image copied losslessly; 1024x1024 derivative resized with macOS sips for AppIcon packaging. No code-generated illustration or other content editing.",
+  "qa": {
+    "actual_source_dimensions": [
+      1254,
+      1254
+    ],
+    "alpha": true,
+    "no_text": true,
+    "cat_identity": "Silver-white dense short fur, gray forehead pattern, yellow-green eyes, pink-brown nose, rounded face.",
+    "alpha_gt_128_bbox": [
+      76,
+      88,
+      1175,
+      1166
+    ],
+    "near_transparent_green_pixels_max_alpha": 2,
+    "note": "Image viewer may expose RGB noise in alpha 1–2 pixels outside the tile. Verify system compositing during final AppIcon packaging; the actual visible tile is clean at standard alpha thresholds."
+  }
+}

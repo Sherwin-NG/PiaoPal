@@ -1,0 +1,70 @@
+name: PiaoPal
+options:
+  bundleIdPrefix: io.github.sherwinng
+  deploymentTarget:
+    macOS: "13.0"
+  xcodeVersion: "15"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: 5.9
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    ENABLE_HARDENED_RUNTIME: YES
+    CODE_SIGN_STYLE: Automatic
+    PRODUCT_BUNDLE_IDENTIFIER: io.github.sherwinng.PiaoPal
+    INFOPLIST_FILE: Info.plist
+    SWIFT_OPTIMIZATION_LEVEL: "-O"
+    MTL_ENABLE_DEBUG_INFO: INCLUDE_SOURCE
+    MTL_FAST_MATH: YES
+
+targets:
+  PiaoPal:
+    type: application
+    platform: macOS
+    productName: PiaoPal
+    sources:
+      - path: App
+        type: group
+      - path: Engine
+        type: group
+      - path: Skins
+        type: group
+      - path: Utils
+        type: group
+      - path: LICENSE
+        buildPhase: resources
+      - path: THIRD_PARTY_NOTICES.md
+        buildPhase: resources
+      - path: Resources/companion-catalog.json
+        buildPhase: resources
+      # Pixel sprite sheets — copied as-is (folder reference).
+      - path: Resources/Sprites
+        type: folder
+        buildPhase: resources
+      # App icon asset catalog — must be type:file so xcodegen
+      # compiles it (produces Assets.car) instead of copying raw PNGs.
+      - path: Resources/Assets.xcassets
+        type: file
+      - path: Resources/Localizations
+        type: group
+    settings:
+      base:
+        PRODUCT_NAME: PiaoPal
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
+        COMBINE_HIDPI_IMAGES: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    entitlements:
+      path: PiaoPal.entitlements
+      properties:
+        com.apple.security.automation.apple-events: true
+
+schemes:
+  PiaoPal:
+    build:
+      targets:
+        PiaoPal: all
+    run:
+      config: Debug
+    archive:
+      config: Release

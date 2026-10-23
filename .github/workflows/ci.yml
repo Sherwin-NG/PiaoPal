@@ -1,0 +1,40 @@
+name: PiaoPal CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos:
+    name: macOS Universal
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Test languages, sprite assets, and update handling
+        run: bash scripts/test-macos.sh
+      - name: Build and verify Apple Silicon and Intel packages
+        run: bash scripts/package-macos.sh
+      - name: Retain verified Mac packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: piaopal-macos-universal
+          path: |
+            dist/*-macOS-universal.dmg
+            dist/*-macOS-universal.zip
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7

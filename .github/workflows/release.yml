@@ -1,0 +1,135 @@
+name: PiaoPal Release
+
+# Only an explicit version tag assembles a draft. Publishing remains a separate step.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag, for example v0.0.1'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Validate release inputs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+      commit: ${{ steps.version.outputs.commit }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate tag, project identity, and release notes
+        id: version
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, plistlib, re, subprocess
+          tag = os.environ['RELEASE_TAG']
+          if not re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+', tag):
+              raise SystemExit('Expected a release tag such as v0.0.1')
+          version = tag[1:]
+          with open('Info.plist', 'rb') as source:
+              info = plistlib.load(source)
+          if info['CFBundleShortVersionString'] != version:
+              raise SystemExit('Tag must match CFBundleShortVersionString')
+          if info['CFBundleName'] != 'PiaoPal':
+              raise SystemExit('Expected PiaoPal project identity')
+          notes = pathlib.Path('releases') / f'{tag}.md'
+          if not notes.is_file() or not notes.read_text(encoding='utf-8').strip():
+              raise SystemExit(f'Missing release notes: {notes}')
+          commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          tagged = subprocess.check_output(['git', 'rev-parse', f'refs/tags/{tag}^{{commit}}'], text=True).strip()
+          if commit != tagged:
+              raise SystemExit('Checked out commit does not match the requested tag')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
+              output.write(f'version={version}\ntag={tag}\ncommit={commit}\n')
+          PY
+
+  macos:
+    name: Build macOS Universal
+    needs: prepare
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          persist-credentials: false
+      - name: Test languages, sprite assets, and update handling
+        run: bash scripts/test-macos.sh
+      - name: Build and verify DMG, ZIP, and SHA-256 manifest
+        env:
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: bash scripts/package-macos.sh "$RELEASE_VERSION"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: piaopal-release-macos
+          path: |
+            dist/*-macOS-universal.dmg
+            dist/*-macOS-universal.zip
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+          compression-level: 0
+
+  draft:
+    name: Assemble verified draft release
+    needs: [prepare, macos]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: piaopal-release-macos
+          path: dist
+      - name: Verify downloaded packages against build checksums
+        run: |
+          cd dist
+          sha256sum --check SHA256SUMS.txt
+      - name: Require both packages and regenerate release manifest
+        env:
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+        run: python3 scripts/release-checksums.py --version "$RELEASE_VERSION" --directory dist
+      - name: Create or update a draft without changing published releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          set -euo pipefail
+          notes="releases/$RELEASE_TAG.md"
+          assets=(dist/*.dmg dist/*.zip dist/SHA256SUMS.txt)
+          if gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft > "$RUNNER_TEMP/release-is-draft"; then
+            if [[ "$(cat "$RUNNER_TEMP/release-is-draft")" != true ]]; then
+              echo 'This release is already published; its files will not be replaced.' >&2
+              exit 1
+            fi
+            gh release edit "$RELEASE_TAG" --title "PiaoPal $RELEASE_TAG" --notes-file "$notes"
+            gh release upload "$RELEASE_TAG" "${assets[@]}" --clobber
+          else
+            gh release create "$RELEASE_TAG" "${assets[@]}" \
+              --verify-tag --draft --title "PiaoPal $RELEASE_TAG" --notes-file "$notes"
+          fi
+          echo 'PiaoPal draft ready. Review installation and package contents before publishing.' >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "sprites": [
+    { "id": "piaopiao", "name": "PiaoPiao", "author": "Sherwin-NG · AI-assisted artwork", "bundled": true, "url": null },
+    { "id": "classic", "name": "TuanTuan", "author": "Open-source artwork", "bundled": true, "url": null },
+    { "id": "dog", "name": "Dodo", "author": "Open-source artwork", "bundled": true, "url": null },
+    { "id": "tora", "name": "BanBan", "author": "Open-source artwork", "bundled": true, "url": null },
+    { "id": "maia", "name": "TaoTao", "author": "Open-source artwork", "bundled": true, "url": null },
+    { "id": "vaporwave", "name": "MuMu", "author": "Open-source artwork", "bundled": true, "url": null }
+  ]
+}

@@ -1,0 +1,1032 @@
+{
+  "schema_version": 1,
+  "tool": "image_gen.imagegen (built-in)",
+  "status": "generated source atlas and generated four-frame correction; ready for deterministic engineering packing",
+  "pixel_coordinates": "source top-left origin, right/bottom exclusive; destination col,row 0-based",
+  "output": {
+    "width": 512,
+    "height": 256,
+    "columns": 8,
+    "rows": 4,
+    "cell_size": 64,
+    "main_global_scale": 0.2647058823529412,
+    "patch_art_unit_factor": 0.35,
+    "default_anchor": [
+      32,
+      60
+    ],
+    "alpha_cleanup": "No alpha threshold is applied. Preserve generated alpha; CoreGraphics compiles premultiplied pixels and Metal uses premultiplied blending.",
+    "interpolation": "nearest-neighbor recommended for pixel art"
+  },
+  "frames": [
+    {
+      "name": "scratchWallN_0",
+      "col": 0,
+      "row": 0,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        58,
+        41,
+        172,
+        245
+      ],
+      "crop_xyxy": [
+        56,
+        39,
+        174,
+        247
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 115.0,
+      "ink_bottom_y": 245,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "walkNW_0",
+      "col": 1,
+      "row": 0,
+      "source": "piaopiao-nw-sleep-patch-v1.png",
+      "source_dimensions": [
+        1261,
+        1247
+      ],
+      "bbox_xyxy": [
+        65,
+        84,
+        587,
+        602
+      ],
+      "crop_xyxy": [
+        60,
+        79,
+        592,
+        607
+      ],
+      "source_art_unit_factor": 0.35,
+      "output_scale": 0.0926470588235294,
+      "ink_center_x": 326.0,
+      "ink_bottom_y": 602,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "sleeping_0",
+      "col": 2,
+      "row": 0,
+      "source": "piaopiao-nw-sleep-patch-v1.png",
+      "source_dimensions": [
+        1261,
+        1247
+      ],
+      "bbox_xyxy": [
+        685,
+        259,
+        1204,
+        582
+      ],
+      "crop_xyxy": [
+        680,
+        254,
+        1209,
+        587
+      ],
+      "source_art_unit_factor": 0.35,
+      "output_scale": 0.0926470588235294,
+      "ink_center_x": 944.5,
+      "ink_bottom_y": 582,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "walkE_0",
+      "col": 3,
+      "row": 0,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        685,
+        81,
+        883,
+        242
+      ],
+      "crop_xyxy": [
+        683,
+        79,
+        885,
+        244
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 784.0,
+      "ink_bottom_y": 242,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "scratchWallW_0",
+      "col": 4,
+      "row": 0,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        937,
+        42,
+        1096,
+        242
+      ],
+      "crop_xyxy": [
+        935,
+        40,
+        1098,
+        244
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 1016.5,
+      "ink_bottom_y": 242,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "scratchSelf_0",
+      "col": 5,
+      "row": 0,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        1141,
+        79,
+        1308,
+        245
+      ],
+      "crop_xyxy": [
+        1139,
+        77,
+        1310,
+        247
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 1224.5,
+      "ink_bottom_y": 245,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "scratchSelf_1",
+      "col": 6,
+      "row": 0,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        1352,
+        84,
+        1517,
+        245
+      ],
+      "crop_xyxy": [
+        1350,
+        82,
+        1519,
+        247
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 1434.5,
+      "ink_bottom_y": 245,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "scratchSelf_2",
+      "col": 7,
+      "row": 0,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        1572,
+        84,
+        1738,
+        245
+      ],
+      "crop_xyxy": [
+        1570,
+        82,
+        1740,
+        247
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 1655.0,
+      "ink_bottom_y": 245,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "scratchWallN_1",
+      "col": 0,
+      "row": 1,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        61,
+        269,
+        181,
+        464
+      ],
+      "crop_xyxy": [
+        59,
+        267,
+        183,
+        466
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 121.0,
+      "ink_bottom_y": 464,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "walkNW_1",
+      "col": 1,
+      "row": 1,
+      "source": "piaopiao-nw-sleep-patch-v1.png",
+      "source_dimensions": [
+        1261,
+        1247
+      ],
+      "bbox_xyxy": [
+        77,
+        667,
+        602,
+        1189
+      ],
+      "crop_xyxy": [
+        72,
+        662,
+        607,
+        1194
+      ],
+      "source_art_unit_factor": 0.35,
+      "output_scale": 0.0926470588235294,
+      "ink_center_x": 339.5,
+      "ink_bottom_y": 1189,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "sleeping_1",
+      "col": 2,
+      "row": 1,
+      "source": "piaopiao-nw-sleep-patch-v1.png",
+      "source_dimensions": [
+        1261,
+        1247
+      ],
+      "bbox_xyxy": [
+        685,
+        827,
+        1212,
+        1167
+      ],
+      "crop_xyxy": [
+        680,
+        822,
+        1217,
+        1172
+      ],
+      "source_art_unit_factor": 0.35,
+      "output_scale": 0.0926470588235294,
+      "ink_center_x": 948.5,
+      "ink_bottom_y": 1167,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "walkE_1",
+      "col": 3,
+      "row": 1,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        682,
+        290,
+        883,
+        461
+      ],
+      "crop_xyxy": [
+        680,
+        288,
+        885,
+        463
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 782.5,
+      "ink_bottom_y": 461,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "scratchWallW_1",
+      "col": 4,
+      "row": 1,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        937,
+        264,
+        1096,
+        461
+      ],
+      "crop_xyxy": [
+        935,
+        262,
+        1098,
+        463
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 1016.5,
+      "ink_bottom_y": 461,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "walkSE_0",
+      "col": 5,
+      "row": 1,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        1147,
+        282,
+        1308,
+        471
+      ],
+      "crop_xyxy": [
+        1145,
+        280,
+        1310,
+        473
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 1227.5,
+      "ink_bottom_y": 471,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "walkSW_1",
+      "col": 6,
+      "row": 1,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        1353,
+        282,
+        1511,
+        474
+      ],
+      "crop_xyxy": [
+        1351,
+        280,
+        1513,
+        476
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 1432.0,
+      "ink_bottom_y": 474,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "scratchWallS_0",
+      "col": 7,
+      "row": 1,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        1605,
+        277,
+        1717,
+        461
+      ],
+      "crop_xyxy": [
+        1603,
+        275,
+        1719,
+        463
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 1661.0,
+      "ink_bottom_y": 461,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "walkNE_0",
+      "col": 0,
+      "row": 2,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        43,
+        501,
+        204,
+        675
+      ],
+      "crop_xyxy": [
+        41,
+        499,
+        206,
+        677
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 123.5,
+      "ink_bottom_y": 675,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "walkN_0",
+      "col": 1,
+      "row": 2,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        289,
+        485,
+        380,
+        669
+      ],
+      "crop_xyxy": [
+        287,
+        483,
+        382,
+        671
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 334.5,
+      "ink_bottom_y": 669,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "scratchWallE_0",
+      "col": 2,
+      "row": 2,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        460,
+        487,
+        626,
+        669
+      ],
+      "crop_xyxy": [
+        458,
+        485,
+        628,
+        671
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 543.0,
+      "ink_bottom_y": 669,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "tired_0",
+      "col": 3,
+      "row": 2,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        700,
+        510,
+        857,
+        669
+      ],
+      "crop_xyxy": [
+        698,
+        508,
+        859,
+        671
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 778.5,
+      "ink_bottom_y": 669,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "walkW_0",
+      "col": 4,
+      "row": 2,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        906,
+        500,
+        1100,
+        669
+      ],
+      "crop_xyxy": [
+        904,
+        498,
+        1102,
+        671
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 1003.0,
+      "ink_bottom_y": 669,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "walkSE_1",
+      "col": 5,
+      "row": 2,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        1157,
+        504,
+        1318,
+        675
+      ],
+      "crop_xyxy": [
+        1155,
+        502,
+        1320,
+        677
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 1237.5,
+      "ink_bottom_y": 675,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "scratchWallS_1",
+      "col": 6,
+      "row": 2,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        1389,
+        495,
+        1502,
+        670
+      ],
+      "crop_xyxy": [
+        1387,
+        493,
+        1504,
+        672
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 1445.5,
+      "ink_bottom_y": 670,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "walkS_1",
+      "col": 7,
+      "row": 2,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        1617,
+        485,
+        1710,
+        676
+      ],
+      "crop_xyxy": [
+        1615,
+        483,
+        1712,
+        678
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 1663.5,
+      "ink_bottom_y": 676,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "walkNE_1",
+      "col": 0,
+      "row": 3,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        53,
+        701,
+        219,
+        866
+      ],
+      "crop_xyxy": [
+        51,
+        699,
+        221,
+        868
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 136.0,
+      "ink_bottom_y": 866,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "walkN_1",
+      "col": 1,
+      "row": 3,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        291,
+        680,
+        383,
+        864
+      ],
+      "crop_xyxy": [
+        289,
+        678,
+        385,
+        866
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 337.0,
+      "ink_bottom_y": 864,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "scratchWallE_1",
+      "col": 2,
+      "row": 3,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        460,
+        679,
+        621,
+        864
+      ],
+      "crop_xyxy": [
+        458,
+        677,
+        623,
+        866
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 540.5,
+      "ink_bottom_y": 864,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "idle_0",
+      "col": 3,
+      "row": 3,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        700,
+        697,
+        855,
+        864
+      ],
+      "crop_xyxy": [
+        698,
+        695,
+        857,
+        866
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 777.5,
+      "ink_bottom_y": 864,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "walkW_1",
+      "col": 4,
+      "row": 3,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        911,
+        705,
+        1107,
+        859
+      ],
+      "crop_xyxy": [
+        909,
+        703,
+        1109,
+        861
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 1009.0,
+      "ink_bottom_y": 859,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "walkSW_0",
+      "col": 5,
+      "row": 3,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        1155,
+        693,
+        1303,
+        868
+      ],
+      "crop_xyxy": [
+        1153,
+        691,
+        1305,
+        870
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 1229.0,
+      "ink_bottom_y": 868,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "walkS_0",
+      "col": 6,
+      "row": 3,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        1398,
+        680,
+        1489,
+        868
+      ],
+      "crop_xyxy": [
+        1396,
+        678,
+        1491,
+        870
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 1443.5,
+      "ink_bottom_y": 868,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    },
+    {
+      "name": "alert_0",
+      "col": 7,
+      "row": 3,
+      "source": "piaopiao-atlas-v2.png",
+      "source_dimensions": [
+        1774,
+        887
+      ],
+      "bbox_xyxy": [
+        1587,
+        696,
+        1742,
+        862
+      ],
+      "crop_xyxy": [
+        1585,
+        694,
+        1744,
+        864
+      ],
+      "source_art_unit_factor": 1.0,
+      "output_scale": 0.2647058823529412,
+      "ink_center_x": 1664.5,
+      "ink_bottom_y": 862,
+      "output_anchor": [
+        32,
+        60
+      ],
+      "anchor_convention": "center of ink bounding box horizontally; bottom of ink bounding box vertically. Apply shared output_scale, do not fit independently."
+    }
+  ],
+  "qa": {
+    "main_rgba_dimensions": [
+      1774,
+      887
+    ],
+    "main_large_connected_components_at_alpha128": 32,
+    "patch_rgba_dimensions": [
+      1261,
+      1247
+    ],
+    "patch_large_connected_components_at_alpha128": 4,
+    "main_source_crop_required": "Do not divide raw image into equal-height cells; row baselines are not perfectly uniform. Use manifest boxes.",
+    "direction_review": "N rear; S front; E right; W left; NE rear-right; NW rear-left corrected with patch; SE front-right; SW front-left.",
+    "sleep_review": "Both patched frames face same left side, curled, closed eyes, slight body-height difference.",
+    "identity_review": "Silver-white fur, grey forehead/back/tail markings, yellow-green eyes when face visible, pink nose, no clothes/collar.",
+    "pending": "Runtime inspection recorded in docs/piaopal-macos.md."
+  }
+}
