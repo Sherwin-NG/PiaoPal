@@ -67,6 +67,8 @@ struct PetPreviewConfiguration {
 }
 
 final class MetalRenderer: ObservableObject {
+    static let defaultCatScale: Float = 1.0
+
     let view: NSView          // drop into OverlayWindow
 
     private let device: MTLDevice
@@ -85,7 +87,7 @@ final class MetalRenderer: ObservableObject {
     // display frame cannot mix a new UI selection with an old animation layout.
     private struct SimulationSettings {
         var skinID = SkinManager.defaultSkinID
-        var scale: Float = 1
+        var scale: Float = MetalRenderer.defaultCatScale
         var laserActive = false
     }
     private var simulationSettings = SimulationSettings()
@@ -109,7 +111,7 @@ final class MetalRenderer: ObservableObject {
     @Published private(set) var stats = DebugStats()
     @Published private(set) var currentSkinID = SkinManager.defaultSkinID
     @Published private(set) var allSkinIDs: [String] = SkinManager.skinIDs
-    @Published var catScale: Float = 1.0
+    @Published var catScale: Float = MetalRenderer.defaultCatScale
     @Published var speedMultiplier: Float = 1.0
     @Published var laserActive: Bool = false
 
@@ -187,10 +189,10 @@ final class MetalRenderer: ObservableObject {
         laserTexture = makeLaserTexture()
 
         if let preview {
-            // Preview selection is isolated from bundled skins and saved preferences.
+            // Preview selection is isolated from saved preferences and keeps
+            // the same 1× starting size as a fresh ordinary launch.
             currentSkinID = try skinManager.loadPreviewSkin(from: preview.atlasURL)
             allSkinIDs = [currentSkinID]
-            catScale = preview.cyclesAnimations ? 3 : 2
         } else {
             try skinManager.loadDefaultSkin()
             if let savedSkin = UserDefaults.standard.string(forKey: "selected_skin"),

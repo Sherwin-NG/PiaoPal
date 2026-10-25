@@ -1,6 +1,6 @@
 # PiaoPal 开发说明
 
-当前版本为 `0.0.3`，支持 macOS 13+、Apple Silicon 与 Intel。本仓库只包含 Mac 应用。
+当前版本为 `0.1.0`，支持 macOS 13+、Apple Silicon 与 Intel。本仓库只包含 Mac 应用。
 
 ## 项目结构
 
@@ -23,7 +23,7 @@ Xcode 工程、target、scheme、product 和 Swift package 均命名为 `PiaoPal
 
 ```sh
 bash scripts/test-macos.sh
-bash scripts/package-macos.sh 0.0.3
+bash scripts/package-macos.sh 0.1.0
 ```
 
 测试在独立临时目录编译并运行，不以测试数据覆盖真实用户设置。它们检查语言识别与格式占位符、成就文案、素材尺寸与动画映射、图标、运动状态与步态时序，以及更新器的版本比较和错误处理。`Tests/MacMotion` 的边界运动回归会核对真实位移、待机和重新跟随；`Tests/MacStats` 使用独立偏好域，检查短会话跨进程保存、重复保存和并发里程累积。两组测试均由 `scripts/test-macos.sh` 执行。
@@ -78,7 +78,7 @@ build/review-pet-motion .
 
 当前飘飘的基准速度为 160pt/s，继续乘以用户设置的速度倍率；原 v4 的 64pt/s 已由响应优化替换。完整步长为 `20 × displayScale` pt，步态最高 5 循环/s。低速按实际位移推进步态；达到上限后仍保持用户指定速度，因此小尺寸或高速下的残余滑移更明显。四帧素材不提供连续足锁，NE/NW 外侧后腿仍有保守伸收和拖步。
 
-正式应用继续读取并保存用户的大小、速度和角色设置。独立桌面预览使用 2×显示、1×速度，循环状态预览使用 3×显示；这些预览配置不是正式版的默认设置，也不覆盖正式偏好。
+正式应用首次启动的默认大小为 1×，继续读取并保存用户自定义的大小、速度和角色设置。独立桌面预览与循环状态预览也统一使用 1×显示、1×速度，不再自动放大；预览使用独立身份，不覆盖正式偏好。
 
 真实平移复查命令：`build/review-pet-motion . build/moving-review --moving-only --cycles 10`。输出包含 1×/2× GIF、每次换帧 PNG 与世界坐标 JSON；查看 GIF 首帧不等于观看动态。各方向的接地质量、审核记录与四帧局限见 [动画验收说明](animation-review.md)。
 
