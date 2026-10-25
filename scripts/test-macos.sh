@@ -21,10 +21,14 @@ xcrun swiftc "${COMMON_FLAGS[@]}" Engine/Simulation/PetMotion.swift \
   Tests/MacMotion/main.swift -o "$TEST_DIR/motion-tests"
 "$TEST_DIR/motion-tests"
 
+xcrun swiftc "${COMMON_FLAGS[@]}" App/CatStats.swift \
+  Tests/MacStats/main.swift -o "$TEST_DIR/stats-tests"
+"$TEST_DIR/stats-tests"
+
 xcrun swiftc "${COMMON_FLAGS[@]}" -parse-as-library \
   App/Updater.swift Utils/Logging.swift Tests/MacUpdater/UpdaterTests.swift \
   -o "$TEST_DIR/updater-tests"
 "$TEST_DIR/updater-tests"
 
 
-echo "PASS: PiaoPal macOS localization, sprites, motion, and updater checks."
+echo "PASS: PiaoPal macOS localization, sprites, motion, statistics, and updater checks."

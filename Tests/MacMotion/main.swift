@@ -37,6 +37,101 @@ for _ in 0..<60 {
 }
 precondition(legacyChanges == 10)
 
+// All five older skins use the legacy profile. Count only movement that survives
+// the screen clamp, including the last partial step and sliding along an edge.
+func checkLegacyTravel(_ pet: PetMotion, ticks: Int, x: Float, y: Float) -> (distance: Float, partialSteps: Int) {
+    var reportedThisTick: Float = 0
+    var callbacksThisTick = 0
+    var total: Float = 0
+    var partialSteps = 0
+    pet.onStep = { distance in
+        precondition(distance > 0, "A stationary legacy pet must not report a step")
+        reportedThisTick += distance
+        callbacksThisTick += 1
+    }
+    defer { pet.onStep = nil }
+    for _ in 0..<ticks {
+        let before = SIMD2<Float>(pet.posX, pet.posY)
+        reportedThisTick = 0
+        callbacksThisTick = 0
+        pet.update(dt: 0.1, mouseX: x, mouseY: y)
+        let delta = SIMD2<Float>(pet.posX, pet.posY) - before
+        let actual = (delta.x * delta.x + delta.y * delta.y).squareRoot()
+        near(reportedThisTick, actual, tolerance: 0.0001, "Legacy step statistics equal actual displacement")
+        precondition(callbacksThisTick == (actual > 0.00001 ? 1 : 0))
+        if actual > 0.00001 && actual < 16 * pet.speedMultiplier - 0.001 { partialSteps += 1 }
+        total += actual
+    }
+    return (total, partialSteps)
+}
+
+// Exact QA reproduction: the +20 cursor offset leaves the bottom-edge target
+// 51 points away, outside the 48-point stopping radius but impossible to reach.
+let legacyBottom = PetMotion()
+_ = checkLegacyTravel(legacyBottom, ticks: 100, x: 100, y: 899)
+near(legacyBottom.posY, 868, "Legacy reaches the bottom screen inset")
+let blockedBottom = checkLegacyTravel(legacyBottom, ticks: 30, x: 100, y: 899)
+near(blockedBottom.distance, 0, "Three seconds blocked must report zero, not 480 points")
+precondition(!PetAnimationTiming.walkingDirections.contains(legacyBottom.currentAnimation),
+             "A blocked legacy pet must rest instead of walking in place")
+
+// Idle time at the boundary must accumulate instead of being reset each tick.
+// Moving the cursor away then retains the legacy six-tick alert before pursuit.
+let bottomPosition = SIMD2<Float>(legacyBottom.posX, legacyBottom.posY)
+for _ in 0..<6 {
+    legacyBottom.update(dt: 0.1, mouseX: 700, mouseY: 400)
+    precondition(legacyBottom.currentAnimation == .alert)
+    precondition(SIMD2<Float>(legacyBottom.posX, legacyBottom.posY) == bottomPosition)
+}
+let resumed = checkLegacyTravel(legacyBottom, ticks: 1, x: 700, y: 400)
+near(resumed.distance, 16, "Legacy resumes pursuit after boundary rest")
+precondition(legacyBottom.posY < bottomPosition.y && legacyBottom.posX > bottomPosition.x)
+
+// Targets beyond every side/corner stress the clamp independently of the
+// stopping radius. Ordinary in-screen corners are covered as well.
+let boundaryTargets: [(Float, Float)] = [
+    (100, -200), (100, 1_100), (-200, 80), (1_600, 80),
+    (-200, -200), (1_600, -200), (-200, 1_100), (1_600, 1_100),
+    (0, 0), (1_439, 0), (0, 899), (1_439, 899)
+]
+var clippedSteps = 0
+for multiplier: Float in [0.4, 1, 2.5] {
+    for (x, y) in boundaryTargets {
+        let pet = PetMotion()
+        pet.speedMultiplier = multiplier
+        let journey = checkLegacyTravel(pet, ticks: 500, x: x, y: y)
+        clippedSteps += journey.partialSteps
+        precondition(pet.posX >= 32 && pet.posX <= 1_408 && pet.posY >= 32 && pet.posY <= 868)
+        let resting = checkLegacyTravel(pet, ticks: 30, x: x, y: y)
+        near(resting.distance, 0, "Legacy remains settled at every screen side/corner")
+        precondition(!PetAnimationTiming.walkingDirections.contains(pet.currentAnimation))
+        let recovering = checkLegacyTravel(pet, ticks: 10, x: 700, y: 400)
+        precondition(recovering.distance > 0, "Legacy follows again when the cursor leaves a boundary")
+    }
+}
+precondition(clippedSteps > 0, "The boundary matrix must exercise partially clamped movement")
+
+// At the bottom, movement can still continue along the unblocked horizontal
+// axis. Its animation should face that actual travel, and its distance is shorter
+// than the diagonal speed request.
+let slidingLegacy = PetMotion()
+_ = checkLegacyTravel(slidingLegacy, ticks: 100, x: 100, y: 899)
+let sliding = checkLegacyTravel(slidingLegacy, ticks: 7, x: 200, y: 899)
+precondition(sliding.distance > 0 && sliding.distance < 16)
+near(slidingLegacy.posY, 868, "Legacy edge sliding stays on the bottom inset")
+precondition(slidingLegacy.currentAnimation == .E)
+
+// The movement change must preserve the legacy menu-bar rest and wake path.
+let legacyDock = PetMotion()
+legacyDock.dockToMenuBar(targetY: 24)
+run(legacyDock, seconds: 2, fps: 10, x: 700, y: 400)
+near(legacyDock.posY, 24, "Legacy docking target")
+precondition(legacyDock.currentAnimation == .sleeping && legacyDock.isDockedToMenuBar)
+legacyDock.wake()
+precondition(!legacyDock.isDockedToMenuBar)
+_ = checkLegacyTravel(legacyDock, ticks: 10, x: 700, y: 400)
+precondition(legacyDock.posX > 100 && legacyDock.posY > 32)
+
 // PiaoPiao must move on every display frame, and step statistics must measure
 // the actual displacement rather than the requested maximum speed.
 let smooth = naturalPet()
@@ -284,4 +379,4 @@ DispatchQueue.concurrentPerform(iterations: 4) { worker in
 }
 precondition(completedOperations == 8_000)
 
-print("PASS: responsive continuous movement, readable gait cadence, speed/size/refresh-rate matrix, arrival/turn hysteresis, dock/wake transitions, stable breathing, walking atlas, legacy behavior and serialized UI/display access")
+print("PASS: responsive continuous movement, readable gait cadence, speed/size/refresh-rate matrix, arrival/turn hysteresis, dock/wake transitions, stable breathing, walking atlas, legacy boundary distance/rest/recovery and serialized UI/display access")

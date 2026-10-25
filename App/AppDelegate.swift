@@ -77,5 +77,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return false
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        renderer?.stop()
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
 }

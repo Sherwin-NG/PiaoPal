@@ -459,6 +459,17 @@ final class PetMotion {
             return
         }
 
+        let nextX = min(max(32, posX - (diffX / distance) * movementSpeed), screenWidth - 32)
+        let nextY = min(max(32, posY - (diffY / distance) * movementSpeed), screenHeight - 32)
+        let displacement = SIMD2<Float>(nextX - posX, nextY - posY)
+        let actualDistance = length(displacement)
+        if actualDistance <= 0.00001 {
+            // An unreachable cursor beyond the screen inset is also a resting
+            // target. Preserve idle timers and any ongoing grooming or nap.
+            idleLogic()
+            return
+        }
+
         idleAnimation  = nil
         idleAnimFrame  = 0
 
@@ -468,21 +479,19 @@ final class PetMotion {
             return
         }
 
-        // 8-directional movement (mirrors JS direction string building).
+        // Face the actual travel direction when a screen edge clips one axis.
         var dir = ""
-        if diffY / distance >  0.5 { dir += "N" }
-        if diffY / distance < -0.5 { dir += "S" }
-        if diffX / distance >  0.5 { dir += "W" }
-        if diffX / distance < -0.5 { dir += "E" }
+        if displacement.y / actualDistance < -0.5 { dir += "N" }
+        if displacement.y / actualDistance >  0.5 { dir += "S" }
+        if displacement.x / actualDistance < -0.5 { dir += "W" }
+        if displacement.x / actualDistance >  0.5 { dir += "E" }
 
         let anim = Anim(rawValue: dir.isEmpty ? "idle" : dir) ?? .idle
         legacyPose(anim, frame: frameCount)
 
-        posX -= (diffX / distance) * movementSpeed
-        posY -= (diffY / distance) * movementSpeed
-        posX = min(max(32, posX), screenWidth  - 32)
-        posY = min(max(32, posY), screenHeight - 32)
-        onStep?(movementSpeed)
+        posX = nextX
+        posY = nextY
+        onStep?(actualDistance)
     }
 
     // MARK: – JS idle() port

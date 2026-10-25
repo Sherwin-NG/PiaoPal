@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import os.lock
 
 /// Persistent lifetime stats for the cat.
@@ -27,9 +28,11 @@ final class CatStats: ObservableObject {
 
     private var pendingDistance: Double = 0
     private var _lock = os_unfair_lock()
-    private let defaults = UserDefaults.standard
+    private let defaults: UserDefaults
+    private var flushTimer: Timer?
 
-    init() {
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
         distancePoints = defaults.double(forKey: Key.distance)
         naps           = defaults.integer(forKey: Key.naps)
         scratches      = defaults.integer(forKey: Key.scratches)
@@ -47,10 +50,12 @@ final class CatStats: ObservableObject {
 
         updateStreak()
 
-        Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
-            self?.flush()
+        flushTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            self?.savePendingDistance()
         }
     }
+
+    deinit { flushTimer?.invalidate() }
 
     // MARK: – Write (render thread safe)
 
@@ -165,9 +170,12 @@ final class CatStats: ObservableObject {
         Calendar.current.dateComponents([.day], from: firstLaunchDate, to: .now).day ?? 0
     }
 
-    // MARK: – Private
+    // MARK: – Persistence
 
-    private func flush() {
+    /// Call on the main thread after stopping motion when the app exits, so the
+    /// final partial timer interval is included in the saved distance and level.
+    func savePendingDistance() {
+        precondition(Thread.isMainThread)
         os_unfair_lock_lock(&_lock)
         let d = pendingDistance
         pendingDistance = 0

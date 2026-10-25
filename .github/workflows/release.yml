@@ -71,7 +71,7 @@ jobs:
         with:
           ref: ${{ needs.prepare.outputs.commit }}
           persist-credentials: false
-      - name: Test languages, sprite assets, and update handling
+      - name: Test languages, sprites, motion, stats, and updates
         run: bash scripts/test-macos.sh
       - name: Build and verify DMG, ZIP, and SHA-256 manifest
         env:

@@ -89,6 +89,8 @@ final class MetalRenderer: ObservableObject {
         var laserActive = false
     }
     private var simulationSettings = SimulationSettings()
+    // Protected by motionAccess, including during shutdown.
+    private var isStopped = false
     private struct MotionFrame {
         var position: SIMD2<Float>
         var pose: PetAnimationPose
@@ -315,6 +317,25 @@ final class MetalRenderer: ObservableObject {
 
     // MARK: – Loop
 
+    @MainActor
+    func stop() {
+        let shouldStop = motionAccess.withMotion { _ in
+            guard !isStopped else { return false }
+            isStopped = true
+            return true
+        }
+        guard shouldStop else { return }
+        // The barrier above drains any in-flight simulation and rejects late
+        // ticks. Never wait for the display link while holding its motion lock.
+        displayLink.stop()
+        if let clickMonitor {
+            NSEvent.removeMonitor(clickMonitor)
+            self.clickMonitor = nil
+        }
+        catStats.savePendingDistance()
+        checkAchievements()
+    }
+
     private func startLoop() {
         displayLink.start { [weak self] dt in self?.tick(dt: dt) }
         if preview?.cyclesAnimations != true { startClickMonitor() }
@@ -327,7 +348,8 @@ final class MetalRenderer: ObservableObject {
         let mouse = mouseTracker.position
         let s = NSScreen.main?.backingScaleFactor ?? 1.0
         metalLayer.drawableSize = CGSize(width: union.width * s, height: union.height * s)
-        let frame = motionAccess.withMotion { companion in
+        let frame: MotionFrame? = motionAccess.withMotion { companion in
+            guard !isStopped else { return nil }
             let settings = simulationSettings
             let profile = motionProfile(for: settings.skinID)
             companion.screenWidth = Float(union.width)
@@ -354,6 +376,7 @@ final class MetalRenderer: ObservableObject {
                                skinID: settings.skinID, scale: settings.scale,
                                laserPosition: settings.laserActive ? SIMD2<Float>(laserMover.x, laserMover.y) : nil)
         }
+        guard let frame else { return }
         // Metal drawable acquisition can block. Never retain the simulation lock
         // while drawing, so clicking and changing controls stay responsive.
         render(dt: dt, frame: frame, union: union)

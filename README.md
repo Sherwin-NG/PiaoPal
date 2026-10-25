@@ -5,7 +5,7 @@
 
 以家里的猫咪飘飘为灵感，为 Mac 带来一位像素伙伴。
 
-**macOS 13+ · Apple Silicon / Intel · 0.0.2**
+**macOS 13+ · Apple Silicon / Intel · 0.0.3**
 
 [下载](https://github.com/Sherwin-NG/PiaoPal/releases/latest) · [反馈问题](https://github.com/Sherwin-NG/PiaoPal/issues) · [构建说明](docs/development.md) · [许可与致谢](THIRD_PARTY_NOTICES.md)
 </div>
@@ -14,7 +14,7 @@ PiaoPal 是 [Sherwin-NG](https://github.com/Sherwin-NG) 独立维护的桌面宠
 
 首版专注 Mac。六款宠物继续保留，并使用新的伙伴名称：**飘飘 PiaoPiao、团团 TuanTuan、豆豆 Dodo、斑斑 BanBan、桃桃 TaoTao、暮暮 MuMu**。部分底层实现与既有素材按原开源许可使用，完整来源见[第三方说明](THIRD_PARTY_NOTICES.md)。
 
-**0.0.2** 改善飘飘的八方向四帧步态、鼠标跟随与起停转向，稳定待机和睡眠时的轻微呼吸，并减少斜向主要支撑脚的拖步；保持原有角色形象。四帧动画仍有残余滑移，详情见[本版说明](releases/v0.0.2.md)。
+**0.0.3** 修复正常退出时最近一段路程可能未保存，以及原有五款伙伴在屏幕边缘原地踏步、虚增里程的问题。角色素材保持不变，飘飘四帧动画仍有残余滑移，详情见[本版说明](releases/v0.0.3.md)。
 
 ## 下载和使用
 
@@ -22,8 +22,8 @@ PiaoPal 是 [Sherwin-NG](https://github.com/Sherwin-NG) 独立维护的桌面宠
 
 | 文件 | 用途 |
 | --- | --- |
-| `PiaoPal-v0.0.2-macOS-universal.dmg` | 推荐。打开后把 PiaoPal 拖入 Applications |
-| `PiaoPal-v0.0.2-macOS-universal.zip` | 解压后把 PiaoPal.app 放入 Applications |
+| `PiaoPal-v0.0.3-macOS-universal.dmg` | 推荐。打开后把 PiaoPal 拖入 Applications |
+| `PiaoPal-v0.0.3-macOS-universal.zip` | 解压后把 PiaoPal.app 放入 Applications |
 | `SHA256SUMS.txt` | 核对下载文件完整性 |
 
 同一个安装包支持 Apple Silicon 和 Intel，系统要求 macOS 13 或更新。GitHub 自动附带的 **Source code** 是源码，不是安装包。
@@ -63,7 +63,7 @@ open PiaoPal.xcodeproj
 
 ```sh
 bash scripts/test-macos.sh
-bash scripts/package-macos.sh 0.0.2
+bash scripts/package-macos.sh 0.0.3
 ```
 
 输出位于 `dist/`。打包流程构建 arm64 + x86_64、校验应用签名和 DMG，并生成 SHA-256 文件。它使用运行时 Metal 着色器编译路径，仍由 Metal 渲染；不要求额外安装独立 Metal Toolchain。

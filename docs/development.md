@@ -1,6 +1,6 @@
 # PiaoPal 开发说明
 
-当前版本为 `0.0.2`，支持 macOS 13+、Apple Silicon 与 Intel。本仓库只包含 Mac 应用。
+当前版本为 `0.0.3`，支持 macOS 13+、Apple Silicon 与 Intel。本仓库只包含 Mac 应用。
 
 ## 项目结构
 
@@ -13,7 +13,7 @@
 | `Resources/Assets.xcassets/` | 应用图标 |
 | `Resources/companion-catalog.json` | 宠物目录 |
 | `artwork/piaopal/` | 飘飘生成原图、提示词和裁切清单 |
-| `Tests/` | 语言、素材、运动状态和更新器的针对性检查 |
+| `Tests/` | 语言、素材、运动状态、统计保存和更新器的针对性检查 |
 | `Tools/` | 素材打包和动画预览工具 |
 | `project.yml` | XcodeGen 工程定义 |
 
@@ -23,10 +23,10 @@ Xcode 工程、target、scheme、product 和 Swift package 均命名为 `PiaoPal
 
 ```sh
 bash scripts/test-macos.sh
-bash scripts/package-macos.sh 0.0.2
+bash scripts/package-macos.sh 0.0.3
 ```
 
-测试在独立临时目录编译并运行，不以测试数据覆盖真实用户设置。它们检查语言识别与格式占位符、成就文案、素材尺寸与动画映射、图标、运动状态与步态时序，以及更新器的版本比较和错误处理。
+测试在独立临时目录编译并运行，不以测试数据覆盖真实用户设置。它们检查语言识别与格式占位符、成就文案、素材尺寸与动画映射、图标、运动状态与步态时序，以及更新器的版本比较和错误处理。`Tests/MacMotion` 的边界运动回归会核对真实位移、待机和重新跟随；`Tests/MacStats` 使用独立偏好域，检查短会话跨进程保存、重复保存和并发里程累积。两组测试均由 `scripts/test-macos.sh` 执行。
 
 打包脚本调用 `PiaoPal.xcodeproj` 的 `PiaoPal` scheme，构建 Apple Silicon 与 Intel，进行 ad-hoc 签名，并输出 DMG、ZIP 和 `SHA256SUMS.txt`。每次运行使用新的暂存目录，已有产物不会作为输入。
 

@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - name: Test languages, sprite assets, and update handling
+      - name: Test languages, sprites, motion, stats, and updates
         run: bash scripts/test-macos.sh
       - name: Build and verify Apple Silicon and Intel packages
         run: bash scripts/package-macos.sh
