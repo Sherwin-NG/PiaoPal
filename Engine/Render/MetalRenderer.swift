@@ -93,6 +93,17 @@ final class MetalRenderer: ObservableObject {
     private var simulationSettings = SimulationSettings()
     // Protected by motionAccess, including during shutdown.
     private var isStopped = false
+    private struct DisplaySnapshot {
+        let union: NSRect
+        let visible: NSRect
+        let screens: [NSRect]
+    }
+    // AppKit screen information is captured on main and shared under motionAccess.
+    private var displaySnapshot: DisplaySnapshot?
+    private var displayAvailable = false
+    private var screenChangeObserver: NSObjectProtocol?
+    private var screenSleepObserver: NSObjectProtocol?
+    private var screenWakeObserver: NSObjectProtocol?
     private struct MotionFrame {
         var position: SIMD2<Float>
         var pose: PetAnimationPose
@@ -152,14 +163,8 @@ final class MetalRenderer: ObservableObject {
         metalLayer.isOpaque = false
         metalLayer.framebufferOnly = true
         metalLayer.maximumDrawableCount = 3
-        metalLayer.allowsNextDrawableTimeout = false
-        if let screen = NSScreen.main {
-            let s = screen.backingScaleFactor
-            metalLayer.contentsScale = s
-            metalLayer.drawableSize = CGSize(
-                width:  screen.frame.width  * s,
-                height: screen.frame.height * s)
-        }
+        // A disconnected or sleeping display must not block this thread forever.
+        metalLayer.allowsNextDrawableTimeout = true
 
         let hostView = NSView()
         hostView.wantsLayer = true
@@ -217,6 +222,7 @@ final class MetalRenderer: ObservableObject {
             simulationSettings.skinID = currentSkinID
             simulationSettings.scale = catScale
         }
+        observeDisplays()
         startLoop()
     }
 
@@ -267,13 +273,17 @@ final class MetalRenderer: ObservableObject {
 
     private func handleClick() {
         let screenPoint = NSEvent.mouseLocation
-        let union = NSScreen.screens.reduce(NSRect.null) { $0.union($1.frame) }
-        let simX = Float(screenPoint.x - union.minX)
-        let simY = Float(union.maxY - screenPoint.y)
+        guard screenPoint.x.isFinite, screenPoint.y.isFinite else { return }
 
         let now = CACurrentMediaTime()
-        let menuBarBottom = Float(NSStatusBar.system.thickness)
+        let menuBarHeight = NSStatusBar.system.thickness
         let action: Int = motionAccess.withMotion { companion in
+            guard !isStopped, displayAvailable, let snapshot = displaySnapshot,
+                  let screen = snapshot.screens.first(where: { $0.contains(screenPoint) })
+            else { return 0 }
+            let simX = Float(screenPoint.x - snapshot.union.minX)
+            let simY = Float(snapshot.union.maxY - screenPoint.y)
+            let menuBarBottom = Float(snapshot.union.maxY - screen.maxY + menuBarHeight)
             let hitRadius = 32 * simulationSettings.scale
             guard abs(simX - companion.posX) < hitRadius,
                   abs(simY - companion.posY) < hitRadius else { return 0 }
@@ -296,6 +306,81 @@ final class MetalRenderer: ObservableObject {
 
     deinit {
         clickMonitor.map { NSEvent.removeMonitor($0) }
+        removeDisplayObservers()
+    }
+
+    private func observeDisplays() {
+        refreshDisplays()
+        screenChangeObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
+        ) { [weak self] _ in self?.refreshDisplays() }
+        let workspace = NSWorkspace.shared.notificationCenter
+        screenSleepObserver = workspace.addObserver(
+            forName: NSWorkspace.screensDidSleepNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            self.motionAccess.withMotion { _ in self.displayAvailable = false }
+            Log.render.info("Display sleeping; rendering suspended")
+        }
+        screenWakeObserver = workspace.addObserver(
+            forName: NSWorkspace.screensDidWakeNotification, object: nil, queue: .main
+        ) { [weak self] _ in self?.refreshDisplays() }
+    }
+
+    private func removeDisplayObservers() {
+        if let screenChangeObserver { NotificationCenter.default.removeObserver(screenChangeObserver) }
+        if let screenSleepObserver { NSWorkspace.shared.notificationCenter.removeObserver(screenSleepObserver) }
+        if let screenWakeObserver { NSWorkspace.shared.notificationCenter.removeObserver(screenWakeObserver) }
+        screenChangeObserver = nil
+        screenSleepObserver = nil
+        screenWakeObserver = nil
+    }
+
+    private func refreshDisplays() {
+        precondition(Thread.isMainThread)
+        guard motionAccess.withMotion({ _ in !isStopped }) else { return }
+        let screens = NSScreen.screens.filter { screen in
+            let frame = screen.frame
+            return frame.origin.x.isFinite && frame.origin.y.isFinite
+                && frame.width.isFinite && frame.height.isFinite
+                && frame.width > 64 && frame.height > 64
+        }
+        guard let first = screens.first else {
+            motionAccess.withMotion { _ in displayAvailable = false }
+            Log.render.warning("No usable display; waiting for screen recovery")
+            return
+        }
+        let frames = screens.map(\.frame)
+        let union = frames.reduce(NSRect.null) { $0.union($1) }
+        let primary = screens.first(where: { $0 == NSScreen.main }) ?? first
+        let scale = primary.backingScaleFactor
+        guard scale.isFinite, scale > 0, union.width.isFinite, union.height.isFinite else { return }
+        let snapshot = DisplaySnapshot(union: union, visible: primary.visibleFrame, screens: frames)
+        let mouse = NSEvent.mouseLocation
+        let menuBarHeight = NSStatusBar.system.thickness
+        metalLayer.contentsScale = scale
+        metalLayer.drawableSize = CGSize(width: union.width * scale, height: union.height * scale)
+
+        motionAccess.withMotion { companion in
+            if let previous = displaySnapshot,
+               !displayAvailable || previous.screens != frames {
+                let oldPoint = NSPoint(x: previous.union.minX + CGFloat(companion.posX),
+                                       y: previous.union.maxY - CGFloat(companion.posY))
+                let screen = frames.first(where: { $0.contains(oldPoint) })
+                    ?? frames.first(where: { $0.contains(mouse) }) ?? first.frame
+                let safe = screen.insetBy(dx: 32, dy: 32)
+                let x = min(max(oldPoint.x, safe.minX), safe.maxX)
+                let y = companion.isDockedToMenuBar
+                    ? screen.maxY - max(32, menuBarHeight)
+                    : min(max(oldPoint.y, safe.minY), safe.maxY)
+                companion.screenWidth = Float(union.width)
+                companion.screenHeight = Float(union.height)
+                companion.relocate(x: Float(x - union.minX), y: Float(union.maxY - y))
+                Log.render.info("Display changed or woke; companion restored to a visible screen")
+            }
+            displaySnapshot = snapshot
+            displayAvailable = true
+        }
     }
 
     // MARK: – Skin switching
@@ -327,6 +412,7 @@ final class MetalRenderer: ObservableObject {
             return true
         }
         guard shouldStop else { return }
+        removeDisplayObservers()
         // The barrier above drains any in-flight simulation and rejects late
         // ticks. Never wait for the display link while holding its motion lock.
         displayLink.stop()
@@ -344,14 +430,10 @@ final class MetalRenderer: ObservableObject {
     }
 
     private func tick(dt: Double) {
-        // Use the union of all screens so the cat can cross between displays.
-        let union = NSScreen.screens.reduce(NSRect.null) { $0.union($1.frame) }
-        let visible = NSScreen.main?.visibleFrame ?? union
         let mouse = mouseTracker.position
-        let s = NSScreen.main?.backingScaleFactor ?? 1.0
-        metalLayer.drawableSize = CGSize(width: union.width * s, height: union.height * s)
-        let frame: MotionFrame? = motionAccess.withMotion { companion in
-            guard !isStopped else { return nil }
+        let result: (MotionFrame, NSRect)? = motionAccess.withMotion { companion in
+            guard !isStopped, displayAvailable, let snapshot = displaySnapshot else { return nil }
+            let union = snapshot.union
             let settings = simulationSettings
             let profile = motionProfile(for: settings.skinID)
             companion.screenWidth = Float(union.width)
@@ -370,15 +452,15 @@ final class MetalRenderer: ObservableObject {
                 companion.update(dt: Float(dt), mouseX: mouse.x, mouseY: mouse.y)
             }
             let tour = preview?.cyclesAnimations == true
-                ? previewSprite(in: union, visible: visible, profile: profile,
+                ? previewSprite(in: union, visible: snapshot.visible, profile: profile,
                                 walkingAtlasAvailable: companion.walkingAtlasAvailable,
                                 displayScale: settings.scale) : nil
-            return MotionFrame(position: tour?.position ?? SIMD2<Float>(companion.posX, companion.posY),
+            return (MotionFrame(position: tour?.position ?? SIMD2<Float>(companion.posX, companion.posY),
                                pose: tour?.pose ?? companion.currentPose,
                                skinID: settings.skinID, scale: settings.scale,
-                               laserPosition: settings.laserActive ? SIMD2<Float>(laserMover.x, laserMover.y) : nil)
+                               laserPosition: settings.laserActive ? SIMD2<Float>(laserMover.x, laserMover.y) : nil), union)
         }
-        guard let frame else { return }
+        guard let (frame, union) = result else { return }
         // Metal drawable acquisition can block. Never retain the simulation lock
         // while drawing, so clicking and changing controls stay responsive.
         render(dt: dt, frame: frame, union: union)

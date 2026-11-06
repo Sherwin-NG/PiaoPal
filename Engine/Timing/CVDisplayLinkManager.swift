@@ -25,10 +25,12 @@ final class CVDisplayLinkManager: NSObject {
         }
 
         CVDisplayLinkSetOutputHandler(dl) { [weak self] _, inNow, _, _, _ -> CVReturn in
-            guard let self else { return kCVReturnSuccess }
-            let dt = self.computeDt(inNow.pointee)
-            self.callback?(dt)
-            return kCVReturnSuccess
+            autoreleasepool {
+                guard let self else { return kCVReturnSuccess }
+                let dt = self.computeDt(inNow.pointee)
+                self.callback?(dt)
+                return kCVReturnSuccess
+            }
         }
 
         CVDisplayLinkStart(dl)
@@ -60,9 +62,11 @@ final class CVDisplayLinkManager: NSObject {
     // Returns dt in seconds, capped to avoid spiral-of-death.
     private func computeDt(_ now: CVTimeStamp) -> Double {
         defer { lastTimestamp = now }
-        guard let last = lastTimestamp else { return 1.0 / 120.0 }
-        let delta = Double(now.videoTime - last.videoTime)
+        guard let last = lastTimestamp,
+              now.videoTimeScale > 0, now.videoTimeScale == last.videoTimeScale,
+              now.videoTime >= last.videoTime else { return 1.0 / 120.0 }
+        let delta = (Double(now.videoTime) - Double(last.videoTime))
             / Double(now.videoTimeScale)
-        return min(delta, 0.1)
+        return delta.isFinite && delta > 0 ? min(delta, 0.1) : 1.0 / 120.0
     }
 }
