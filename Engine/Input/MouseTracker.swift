@@ -28,6 +28,8 @@ final class MouseTracker {
     private func sampleMouseLocation() {
         let p     = NSEvent.mouseLocation              // AppKit: bottom-left of primary, Y up
         let union = NSScreen.screens.reduce(NSRect.null) { $0.union($1.frame) }
+        guard p.x.isFinite, p.y.isFinite, !union.isNull, !union.isEmpty,
+              union.minX.isFinite, union.maxY.isFinite else { return }
         os_unfair_lock_lock(&_lock)
         // Convert to simulation space: top-left of the union rect, Y down.
         _x = Float(p.x - union.minX)

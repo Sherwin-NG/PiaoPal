@@ -379,4 +379,114 @@ DispatchQueue.concurrentPerform(iterations: 4) { worker in
 }
 precondition(completedOperations == 8_000)
 
-print("PASS: responsive continuous movement, readable gait cadence, speed/size/refresh-rate matrix, arrival/turn hysteresis, dock/wake transitions, stable breathing, walking atlas, legacy boundary distance/rest/recovery and serialized UI/display access")
+// A transient unavailable display/cursor must not poison velocity. Compare the
+// recovered journey to a pet that never consumed the invalid sample.
+let invalidCursors: [(Float, Float)] = [
+    (.infinity, 500), (-.infinity, 500), (600, .infinity),
+    (.infinity, .infinity), (.nan, 500), (600, .nan)
+]
+let invalidScreens: [(Float, Float)] = [
+    (0, 900), (-1, 900), (.infinity, 900), (.nan, 900),
+    (1440, 0), (1440, -.infinity), (1440, .nan)
+]
+for profile in [PetMotionProfile.piaopiao, .legacy] {
+    for cursor in invalidCursors {
+        let pet = PetMotion(), control = PetMotion()
+        pet.profile = profile; control.profile = profile
+        run(pet, seconds: 2, x: 1_100, y: 500)
+        run(control, seconds: 2, x: 1_100, y: 500)
+        let before = SIMD2<Float>(pet.posX, pet.posY)
+        var reported: Float = 0
+        pet.onStep = { reported += $0 }
+        pet.update(dt: 0.1, mouseX: cursor.0, mouseY: cursor.1)
+        precondition(SIMD2<Float>(pet.posX, pet.posY) == before)
+        near(reported, 0, "Invalid cursor must not report movement")
+        run(pet, seconds: 5, x: 600, y: 500)
+        run(control, seconds: 5, x: 600, y: 500)
+        near(pet.posX, control.posX, "Following recovers after an invalid cursor sample")
+        near(pet.posY, control.posY, "Invalid cursor must not permanently pin an axis")
+    }
+    for screen in invalidScreens {
+        let pet = PetMotion(), control = PetMotion()
+        pet.profile = profile; control.profile = profile
+        run(pet, seconds: 2, x: 1_100, y: 500)
+        run(control, seconds: 2, x: 1_100, y: 500)
+        let before = SIMD2<Float>(pet.posX, pet.posY)
+        pet.screenWidth = screen.0; pet.screenHeight = screen.1
+        pet.update(dt: 0.1, mouseX: 600, mouseY: 500)
+        precondition(SIMD2<Float>(pet.posX, pet.posY) == before)
+        pet.screenWidth = 1440; pet.screenHeight = 900
+        run(pet, seconds: 5, x: 600, y: 500)
+        run(control, seconds: 5, x: 600, y: 500)
+        near(pet.posX, control.posX, "Following recovers after unavailable screen bounds")
+        near(pet.posY, control.posY, "Invalid screen must not corrupt motion")
+    }
+
+    // Removing a display must recover even a pet asleep at its old edge. The
+    // relocation itself is not walking and must preserve the user's dock state.
+    let sleeping = PetMotion()
+    sleeping.profile = profile
+    sleeping.relocate(x: 1_300, y: 700)
+    sleeping.dockToMenuBar(targetY: 700)
+    run(sleeping, seconds: 3, x: 100, y: 80)
+    precondition(sleeping.currentAnimation == .sleeping && sleeping.isDockedToMenuBar)
+    var relocatedDistance: Float = 0
+    sleeping.onStep = { relocatedDistance += $0 }
+    sleeping.screenWidth = 200; sleeping.screenHeight = 120
+    sleeping.update(dt: 0.1, mouseX: 80, mouseY: 60)
+    precondition(sleeping.posX >= 32 && sleeping.posX <= 168 && sleeping.posY >= 0 && sleeping.posY <= 88)
+    precondition(sleeping.currentAnimation == .sleeping && sleeping.isDockedToMenuBar)
+    near(relocatedDistance, 0, "Sleeping screen relocation must not add walking distance")
+    sleeping.relocate(x: 100, y: 24)
+    run(sleeping, seconds: 1, x: 80, y: 60)
+    near(sleeping.posY, 24, "A relocated docked pet must not chase its old display anchor")
+    near(relocatedDistance, 0, "Explicit dock relocation is not walking")
+
+    let docking = PetMotion()
+    docking.profile = profile
+    docking.dockToMenuBar(targetY: 800)
+    docking.screenWidth = 200; docking.screenHeight = 120
+    run(docking, seconds: 3, x: 80, y: 60)
+    precondition(docking.isDockedToMenuBar && docking.currentAnimation == .sleeping,
+                 "A screen change during docking must still reach rest")
+    precondition(docking.posY >= 0 && docking.posY <= 88)
+    docking.wake()
+    run(docking, seconds: 3, x: 30, y: 40)
+    precondition(!docking.isDockedToMenuBar && docking.posX < 100)
+
+    let tinyScreen = PetMotion()
+    tinyScreen.profile = profile
+    tinyScreen.screenWidth = 16; tinyScreen.screenHeight = 12
+    tinyScreen.update(dt: 0.1, mouseX: 8, mouseY: -14)
+    near(tinyScreen.posX, 8, "Small positive screen centres the sprite horizontally")
+    near(tinyScreen.posY, 6, "Small positive screen never creates negative bounds")
+}
+
+let relocated = naturalPet()
+run(relocated, seconds: 1)
+var relocationSteps = 0
+relocated.onStep = { _ in relocationSteps += 1 }
+let phaseBeforeRelocate = relocated.gaitPhase
+relocated.relocate(x: 500, y: 400)
+near(relocated.posX, 500, "Explicit relocation horizontal position")
+near(relocated.posY, 400, "Explicit relocation vertical position")
+near(relocated.gaitPhase, phaseBeforeRelocate, "Relocation must not advance the walking gait")
+precondition(relocationSteps == 0)
+relocated.relocate(x: .infinity, y: .nan)
+near(relocated.posX, 500, "Invalid relocation is ignored")
+near(relocated.posY, 400, "Invalid relocation preserves a visible position")
+
+// Animation indexing must fail safely even if a caller supplies an invalid or
+// enormous clock/phase instead of trapping on Float-to-Int conversion.
+for profile in [PetMotionProfile.piaopiao, .legacy] {
+    for animation in [Anim.E, .sleeping, .scratchSelf] {
+        for elapsed: Float in [.infinity, -.infinity, .nan, .greatestFiniteMagnitude] {
+            let pose = PetAnimationTiming.pose(animation: animation, elapsed: elapsed,
+                gaitPhase: .nan, profile: profile, walkingAtlasAvailable: true)
+            precondition(pose.uvRect.x.isFinite && pose.uvRect.y.isFinite && pose.scale.y.isFinite)
+            precondition(pose.uvRect.x >= 0 && pose.uvRect.x < 1 && pose.uvRect.y >= 0 && pose.uvRect.y < 1)
+        }
+    }
+}
+
+print("PASS: responsive continuous movement, readable gait cadence, speed/size/refresh-rate matrix, arrival/turn hysteresis, dock/wake transitions, stable breathing, walking atlas, legacy boundary distance/rest/recovery, invalid-input recovery, display relocation, safe animation indexing and serialized UI/display access")

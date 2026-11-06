@@ -76,17 +76,17 @@ enum PetAnimationTiming {
     static func pose(animation: Anim, elapsed: Float, gaitPhase: Float? = nil,
                      profile: PetMotionProfile, walkingAtlasAvailable: Bool = false,
                      displayScale: Float = 1) -> PetAnimationPose {
-        let elapsed = max(0, elapsed)
+        let elapsed = elapsed.isFinite ? max(0, elapsed) : 0
         guard profile == .piaopiao else {
             let interval: Float = animation == .sleeping ? 0.4 : 0.1
-            return PetAnimationPose(uvRect: spriteUV(animation, frame: Int(elapsed / interval)))
+            return timedPose(animation, elapsed: elapsed, interval: interval)
         }
         if let row = walkingDirections.firstIndex(of: animation) {
             // Production supplies distance-based phase; previews use the same
             // speed and displayed stride when no travelled distance is supplied.
-            let phase = (gaitPhase ?? gaitAdvance(distance: elapsed * walkingSpeed,
-                                                 duration: elapsed, displayScale: displayScale))
-                .truncatingRemainder(dividingBy: 1)
+            let rawPhase = gaitPhase ?? gaitAdvance(distance: elapsed * walkingSpeed,
+                                                   duration: elapsed, displayScale: displayScale)
+            let phase = rawPhase.isFinite ? max(0, rawPhase).truncatingRemainder(dividingBy: 1) : 0
             if walkingAtlasAvailable {
                 let col = min(3, max(0, Int(phase * 4)))
                 return PetAnimationPose(uvRect: SIMD4<Float>(Float(col) / 4, Float(row) / 8, 0.25, 0.125),
@@ -97,14 +97,23 @@ enum PetAnimationTiming {
         if animation == .idle || animation == .sleeping {
             let period = animation == .sleeping ? sleepBreathDuration : idleBreathDuration
             let amplitude: Float = animation == .sleeping ? 0.012 : 0.008
-            let breath = (1 - cos(2 * .pi * elapsed / period)) * 0.5
+            let breathPhase = elapsed.truncatingRemainder(dividingBy: period) / period
+            let breath = (1 - cos(2 * .pi * breathPhase)) * 0.5
             // Hold the same authored pose. A subtle, foot-anchored breath avoids
             // morphing two independently drawn cats or translating the whole body.
             return PetAnimationPose(uvRect: spriteUV(animation, frame: 0),
                                     scale: SIMD2<Float>(1, 1 + amplitude * breath))
         }
         let interval: Float = animation == .scratchSelf ? 0.16 : 0.18
-        return PetAnimationPose(uvRect: spriteUV(animation, frame: Int(elapsed / interval)))
+        return timedPose(animation, elapsed: elapsed, interval: interval)
+    }
+
+    private static func timedPose(_ animation: Anim, elapsed: Float, interval: Float) -> PetAnimationPose {
+        let frame = elapsed / interval
+        let count = Float(spriteSets[animation]?.count ?? 1)
+        // Reduce before converting: even finite elapsed times can exceed Int's range.
+        let index = frame.isFinite ? Int(frame.truncatingRemainder(dividingBy: count)) : 0
+        return PetAnimationPose(uvRect: spriteUV(animation, frame: index))
     }
 
     static func previewDuration(for animation: Anim, profile: PetMotionProfile) -> Float {
@@ -187,6 +196,42 @@ final class PetMotion {
 
     var screenWidth: Float  = 1440
     var screenHeight: Float = 900
+    private var lastScreenWidth: Float = 1440
+    private var lastScreenHeight: Float = 900
+
+    private var hasValidScreen: Bool {
+        screenWidth.isFinite && screenHeight.isFinite && screenWidth > 0 && screenHeight > 0
+    }
+    private var horizontalBounds: ClosedRange<Float> {
+        let inset = min(32, screenWidth / 2)
+        return inset...(screenWidth - inset)
+    }
+    private var verticalBounds: ClosedRange<Float> {
+        let inset = min(32, screenHeight / 2)
+        return (isDockedToMenuBar ? 0 : inset)...(screenHeight - inset)
+    }
+
+    /// Re-anchor after a display change without reporting it as walking. Call
+    /// under the same motion lock as update, after supplying valid screen bounds.
+    func relocate(x: Float, y: Float) {
+        guard hasValidScreen, x.isFinite, y.isFinite else { return }
+        posX = min(max(x, horizontalBounds.lowerBound), horizontalBounds.upperBound)
+        posY = min(max(y, verticalBounds.lowerBound), verticalBounds.upperBound)
+        velocity = .zero
+        if isDockedToMenuBar { dockedTargetY = posY }
+    }
+
+    private func constrainAfterScreenChange() {
+        guard screenWidth != lastScreenWidth || screenHeight != lastScreenHeight else { return }
+        lastScreenWidth = screenWidth
+        lastScreenHeight = screenHeight
+        let x = min(max(posX, horizontalBounds.lowerBound), horizontalBounds.upperBound)
+        let y = min(max(posY, verticalBounds.lowerBound), verticalBounds.upperBound)
+        if x != posX || y != posY { relocate(x: x, y: y) }
+        if isDockedToMenuBar {
+            dockedTargetY = min(max(dockedTargetY, verticalBounds.lowerBound), verticalBounds.upperBound)
+        }
+    }
 
     // The JS runs at 100ms ticks; we accumulate real dt to match.
     private let tickInterval: Float = 0.1
@@ -202,7 +247,8 @@ final class PetMotion {
     private var dockedAnimFrame = 0
 
     func dockToMenuBar(targetY: Float) {
-        dockedTargetY  = targetY
+        guard hasValidScreen, targetY.isFinite else { return }
+        dockedTargetY = min(max(0, targetY), screenHeight - min(32, screenHeight / 2))
         dockedAnimFrame = 0
         idleAnimation  = nil
         idleAnimFrame  = 0
@@ -231,7 +277,11 @@ final class PetMotion {
     }
 
     func update(dt: Float, mouseX: Float, mouseY: Float) {
-        guard dt.isFinite, dt > 0 else { return }
+        // Display reconfiguration can briefly have no usable screen or cursor.
+        // Ignoring that sample prevents infinite coordinates poisoning velocity.
+        guard dt.isFinite, dt > 0, hasValidScreen,
+              mouseX.isFinite, mouseY.isFinite else { return }
+        constrainAfterScreenChange()
         if profile == .piaopiao {
             // Substeps make a delayed display callback behave like ordinary frames.
             var remaining = min(dt, 0.25)
@@ -373,11 +423,13 @@ final class PetMotion {
         let displacementLength = length(displacement)
         if displacementLength > available { displacement *= available / displacementLength }
         var nextPosition = position + displacement
-        nextPosition.x = min(max(min(32, position.x), nextPosition.x), max(position.x, screenWidth - 32))
+        nextPosition.x = min(max(min(horizontalBounds.lowerBound, position.x), nextPosition.x),
+                             max(position.x, horizontalBounds.upperBound))
         if !isDockedToMenuBar {
             // A just-woken pet starts above the ordinary screen inset. Let it
             // walk back into the desktop instead of snapping down by eight points.
-            nextPosition.y = min(max(min(32, position.y), nextPosition.y), max(position.y, screenHeight - 32))
+            nextPosition.y = min(max(min(verticalBounds.lowerBound, position.y), nextPosition.y),
+                                 max(position.y, verticalBounds.upperBound))
         }
         let actualDistance = length(nextPosition - position)
         posX = nextPosition.x
@@ -459,8 +511,10 @@ final class PetMotion {
             return
         }
 
-        let nextX = min(max(32, posX - (diffX / distance) * movementSpeed), screenWidth - 32)
-        let nextY = min(max(32, posY - (diffY / distance) * movementSpeed), screenHeight - 32)
+        let nextX = min(max(horizontalBounds.lowerBound, posX - (diffX / distance) * movementSpeed),
+                        horizontalBounds.upperBound)
+        let nextY = min(max(verticalBounds.lowerBound, posY - (diffY / distance) * movementSpeed),
+                        verticalBounds.upperBound)
         let displacement = SIMD2<Float>(nextX - posX, nextY - posY)
         let actualDistance = length(displacement)
         if actualDistance <= 0.00001 {

@@ -6,7 +6,11 @@ final class OverlayWindow: NSWindow {
 
     /// Union of all screen frames in AppKit coordinates (bottom-left origin).
     static func unionFrame() -> NSRect {
-        NSScreen.screens.reduce(.null) { $0.union($1.frame) }
+        let frame = NSScreen.screens.reduce(NSRect.null) { $0.union($1.frame) }
+        guard !frame.isNull, !frame.isEmpty,
+              frame.origin.x.isFinite, frame.origin.y.isFinite,
+              frame.width.isFinite, frame.height.isFinite else { return .zero }
+        return frame
     }
 
     init() {
@@ -30,7 +34,9 @@ final class OverlayWindow: NSWindow {
     }
 
     @objc private func screensChanged() {
-        setFrame(OverlayWindow.unionFrame(), display: false)
+        let frame = OverlayWindow.unionFrame()
+        guard !frame.isEmpty else { return }
+        setFrame(frame, display: false)
     }
 
     override var canBecomeKey: Bool  { false }

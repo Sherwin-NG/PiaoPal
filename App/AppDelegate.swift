@@ -8,12 +8,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var langManager = LanguageManager()
     private var onboardingController: OnboardingWindowController?
     private var achievementNotifications: AchievementNotificationController?
+    private let runDiagnostics = AppRunDiagnostics { message in
+        Log.lifecycle.notice("\(message, privacy: .public)")
+    }
 
     func applicationWillFinishLaunching(_ notification: Notification) {
+        runDiagnostics.recordLaunchAttempt()
         let running = NSRunningApplication.runningApplications(
             withBundleIdentifier: Bundle.main.bundleIdentifier ?? ""
         )
         if running.count > 1 {
+            runDiagnostics.recordTerminationRequest(.duplicateInstance)
             running.first(where: { $0 != NSRunningApplication.current })?.activate(options: .activateIgnoringOtherApps)
             NSApp.terminate(nil)
         }
@@ -26,6 +31,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let preview = try PetPreviewConfiguration.from(arguments: CommandLine.arguments)
             renderer = try MetalRenderer(preview: preview)
         } catch {
+            runDiagnostics.recordTerminationRequest(.startupFailure)
             let alert = NSAlert()
             alert.messageText = langManager["brand.could_not_start"]
             alert.informativeText = error.localizedDescription
@@ -33,6 +39,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NSApp.terminate(nil)
             return
         }
+
+        runDiagnostics.markRunning()
 
         overlayWindow = OverlayWindow()
         let union = OverlayWindow.unionFrame()
@@ -79,6 +87,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         renderer?.stop()
+        runDiagnostics.finish()
+    }
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        runDiagnostics.recordTerminationRequest()
+        return .terminateNow
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
