@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Require both PiaoPal macOS packages before writing release checksums."""
+"""Require every requested PiaoPal platform package before writing checksums."""
 import argparse
 import hashlib
 from pathlib import Path
@@ -11,6 +11,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--version", required=True)
     parser.add_argument("--directory", type=Path, default=Path("dist"))
+    parser.add_argument("--platform", choices=["macos", "all"], default="macos")
     args = parser.parse_args()
     if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", args.version):
         parser.error("version must look like 0.0.1")
@@ -34,6 +35,11 @@ def main() -> None:
         f"{mac_prefix}-macOS-universal.dmg",
         f"{mac_prefix}-macOS-universal.zip",
     ]
+    if args.platform == "all":
+        names.extend([
+            f"{mac_prefix}-Windows-x64.zip",
+            f"{mac_prefix}-Windows-arm64.zip",
+        ])
     names.sort()
     checksums = []
     for name in names:

@@ -15,6 +15,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  release-manifest:
+    name: Release manifest contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - run: python3 -m unittest discover -s Tests/Release -v
+
   macos:
     name: macOS Universal
     runs-on: macos-15
@@ -37,4 +46,49 @@ jobs:
             dist/SHA256SUMS.txt
           if-no-files-found: error
           compression-level: 0
+          retention-days: 7
+
+  windows:
+    name: Windows ${{ matrix.runtime }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runtime: win-x64
+            runner: windows-2025
+          - runtime: win-arm64
+            runner: windows-11-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: ga
+      - name: Test motion, persistence, native windows, and restart
+        shell: pwsh
+        run: ./scripts/test-windows.ps1 -RuntimeIdentifier '${{ matrix.runtime }}'
+      - name: Build and verify self-contained Windows package
+        shell: pwsh
+        run: ./scripts/package-windows.ps1 -RuntimeIdentifier '${{ matrix.runtime }}'
+      - name: Retain verified Windows package
+        uses: actions/upload-artifact@v7
+        with:
+          name: piaopal-windows-${{ matrix.runtime }}
+          path: |
+            dist/*-Windows-*.zip
+            dist/SHA256SUMS-Windows-*.txt
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+      - name: Retain Windows test diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-test-diagnostics-${{ matrix.runtime }}
+          path: build/windows-test-results/
+          if-no-files-found: ignore
           retention-days: 7
