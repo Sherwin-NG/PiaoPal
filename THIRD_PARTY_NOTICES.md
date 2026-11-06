@@ -45,4 +45,6 @@ The character's animation is an artistic interpretation. No breed, age, or behav
 
 ## Distribution
 
-The build includes `LICENSE` and `THIRD_PARTY_NOTICES.md` inside `PiaoPal.app/Contents/Resources/`. The DMG additionally includes both documents beside the app. Keep these notices when redistributing the application or relevant source/assets.
+The macOS build includes `LICENSE` and `THIRD_PARTY_NOTICES.md` inside `PiaoPal.app/Contents/Resources/`. The DMG additionally includes both documents beside the app. Keep these notices when redistributing the application or relevant source/assets.
+
+Windows ZIP packages retain these project notices beside `PiaoPal.exe`, together with the bundled .NET runtime license and third-party notices. The Windows C# motion implementation adapts the credited movement and animation layout; it does not change the original sprite attribution. The .NET runtime is distributed under its included Microsoft/.NET Foundation notices.

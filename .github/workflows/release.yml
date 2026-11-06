@@ -39,7 +39,7 @@ jobs:
           RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           python3 - <<'PY'
-          import os, pathlib, plistlib, re, subprocess
+          import os, pathlib, plistlib, re, subprocess, xml.etree.ElementTree as ET
           tag = os.environ['RELEASE_TAG']
           if not re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+', tag):
               raise SystemExit('Expected a release tag such as v0.0.1')
@@ -50,6 +50,9 @@ jobs:
               raise SystemExit('Tag must match CFBundleShortVersionString')
           if info['CFBundleName'] != 'PiaoPal':
               raise SystemExit('Expected PiaoPal project identity')
+          windows_version = ET.parse('Windows/Directory.Build.props').findtext('./PropertyGroup/Version')
+          if windows_version != version:
+              raise SystemExit('Windows version must match release tag')
           notes = pathlib.Path('releases') / f'{tag}.md'
           if not notes.is_file() or not notes.read_text(encoding='utf-8').strip():
               raise SystemExit(f'Missing release notes: {notes}')
@@ -60,6 +63,8 @@ jobs:
           with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
               output.write(f'version={version}\ntag={tag}\ncommit={commit}\n')
           PY
+      - name: Check cross-platform manifest requirements
+        run: python3 -m unittest discover -s Tests/Release -v
 
   macos:
     name: Build macOS Universal
@@ -88,9 +93,56 @@ jobs:
           if-no-files-found: error
           compression-level: 0
 
+  windows:
+    name: Build Windows ${{ matrix.runtime }}
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runtime: win-x64
+            runner: windows-2025
+          - runtime: win-arm64
+            runner: windows-11-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          persist-credentials: false
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: ga
+      - name: Test Windows motion, storage, native UI, and restart
+        shell: pwsh
+        run: ./scripts/test-windows.ps1 -RuntimeIdentifier '${{ matrix.runtime }}'
+      - name: Publish and verify Windows ZIP
+        shell: pwsh
+        env:
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+        run: ./scripts/package-windows.ps1 -RuntimeIdentifier '${{ matrix.runtime }}' -Version $env:RELEASE_VERSION
+      - uses: actions/upload-artifact@v7
+        with:
+          name: piaopal-release-windows-${{ matrix.runtime }}
+          path: |
+            dist/*-Windows-*.zip
+            dist/SHA256SUMS-Windows-*.txt
+          if-no-files-found: error
+          compression-level: 0
+      - name: Retain native test diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-windows-diagnostics-${{ matrix.runtime }}
+          path: build/windows-test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
   draft:
     name: Assemble verified draft release
-    needs: [prepare, macos]
+    needs: [prepare, macos, windows]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -102,16 +154,20 @@ jobs:
           persist-credentials: false
       - uses: actions/download-artifact@v8
         with:
-          name: piaopal-release-macos
-          path: dist
+          pattern: piaopal-release-*
+          path: downloaded
       - name: Verify downloaded packages against build checksums
         run: |
-          cd dist
-          sha256sum --check SHA256SUMS.txt
-      - name: Require both packages and regenerate release manifest
+          set -euo pipefail
+          mkdir -p dist
+          for package_dir in downloaded/*; do
+            (cd "$package_dir" && sha256sum --check SHA256SUMS*.txt)
+            find "$package_dir" -maxdepth 1 -type f \( -name '*.zip' -o -name '*.dmg' \) -exec cp {} dist/ \;
+          done
+      - name: Require Mac and both Windows packages before release
         env:
           RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
-        run: python3 scripts/release-checksums.py --version "$RELEASE_VERSION" --directory dist
+        run: python3 scripts/release-checksums.py --version "$RELEASE_VERSION" --directory dist --platform all
       - name: Create or update a draft without changing published releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
