@@ -75,6 +75,18 @@ function Invoke-DesktopSmoke {
     Assert-Condition ($result.phase -eq $Phase) "Desktop $Phase returned the wrong phase."
     Assert-Condition ($result.version.Split('+')[0] -eq $expectedVersion) "Desktop $Phase reported the wrong application version."
     Assert-Condition (@($result.checks).Count -gt 0) "Desktop $Phase did not report any checks."
+    $requiredChecks = @('native_overlay_handle', 'layered_clickthrough_noactivate_toolwindow',
+        'visible_topmost_without_taskbar', 'native_layered_render', 'all_bundled_sprite_sheets',
+        'settings_window_created', 'closing_settings_keeps_pet_alive', 'duplicate_process_exits_normally',
+        'duplicate_instance_reopens_existing_settings_without_new_session')
+    if ($Phase -eq 'seed') {
+        $requiredChecks += @('fresh_default_scale_1x', 'settings_controls_apply_preferences')
+    } else {
+        $requiredChecks += @('preferences_survive_restart', 'statistics_survive_restart')
+    }
+    foreach ($check in $requiredChecks) {
+        Assert-Condition ($result.checks -contains $check) "Desktop $Phase omitted required acceptance check: $check."
+    }
     Assert-Condition ($result.framesRendered -gt 0) "Desktop $Phase did not render a layered-window frame."
     Assert-Condition ($result.overlayDisposed -eq $true -and $result.trayDisposed -eq $true) "Desktop $Phase did not cleanly dispose the overlay and tray."
     Assert-Condition ($result.processArchitecture.ToLowerInvariant() -eq $architecture) "Desktop $Phase ran under the wrong process architecture."
