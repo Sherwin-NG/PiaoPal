@@ -15,6 +15,7 @@ $dist = Join-Path $repo 'dist'
 $work = Join-Path $repo ('build/windows-package-' + [guid]::NewGuid().ToString('N'))
 $app = Join-Path $work 'PiaoPal'
 $smoke = Join-Path $work 'published-smoke.json'
+$data = Join-Path $work 'smoke-profile'
 $reports = Join-Path $repo "build/windows-test-results/$RuntimeIdentifier/package"
 New-Item -ItemType Directory -Force $dist, $app | Out-Null
 try {
@@ -55,13 +56,12 @@ try {
         $copy = Join-Path $app "Resources/Sprites/$($sprite.Name)"
         if (-not (Test-Path $copy) -or (Get-FileHash $copy).Hash -ne (Get-FileHash $sprite.FullName).Hash) { throw "Sprite mismatch: $($sprite.Name)" }
     }
-    $data = Join-Path $work 'smoke-profile'
     $start = [Diagnostics.ProcessStartInfo]::new($exe)
     $start.UseShellExecute = $false
     foreach ($arg in @('--smoke-test', $smoke, '--data-dir', $data, '--smoke-phase', 'seed')) { $start.ArgumentList.Add($arg) }
     $process = [Diagnostics.Process]::Start($start)
     try {
-        if (-not $process.WaitForExit(60000)) { $process.Kill($true); throw 'Published application smoke test timed out.' }
+        if (-not $process.WaitForExit(60000)) { $process.Kill($true); $process.WaitForExit(); throw 'Published application smoke test timed out.' }
         if ($process.ExitCode -ne 0) { throw "Published application smoke test failed: $($process.ExitCode)" }
     } finally { $process.Dispose() }
     $result = Get-Content $smoke -Raw | ConvertFrom-Json
@@ -84,10 +84,10 @@ try {
     [IO.File]::WriteAllText((Join-Path $dist "SHA256SUMS-Windows-$architecture.txt"), "$hash  $name`n", [Text.UTF8Encoding]::new($false))
     Write-Host "PASS: v$Version $RuntimeIdentifier, self-contained runtime, native smoke, ZIP contents, and SHA256 verified."
 } finally {
-    if (Test-Path $smoke) {
+    if ((Test-Path $smoke) -or (Test-Path $data)) {
         New-Item -ItemType Directory -Force $reports | Out-Null
-        Copy-Item $smoke (Join-Path $reports 'published-smoke.json') -Force
-        if (Test-Path (Join-Path $work 'smoke-profile')) { Copy-Item (Join-Path $work 'smoke-profile') $reports -Recurse -Force }
+        if (Test-Path $smoke) { Copy-Item $smoke (Join-Path $reports 'published-smoke.json') -Force }
+        if (Test-Path $data) { Copy-Item $data $reports -Recurse -Force }
     }
     if (Test-Path $work) { Remove-Item $work -Recurse -Force }
 }
