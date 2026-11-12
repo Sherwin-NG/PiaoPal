@@ -13,7 +13,7 @@ func containsBytes(_ data: Data, _ pattern: Data) -> Bool {
     return false
 }
 
-func expect(_ condition: Bool, _ message: String) {
+func expect(_ condition: Bool, _ message: String = "expectation failed") {
     if !condition { fatalError(message) }
 }
 
@@ -440,7 +440,7 @@ do {
     let manifestURL = directory.appendingPathComponent(CustomPetStore.manifestName)
     let manifest = try JSONDecoder().decode(CustomPetManifest.self, from: Data(contentsOf: manifestURL))
     expect(manifest.schemaVersion == 1 && manifest.pets[0].id == id, "manifest schema")
-    let raw = String(decoding: Data(contentsOf: manifestURL), as: UTF8.self)
+    let raw = String(decoding: try Data(contentsOf: manifestURL), as: UTF8.self)
     expect(raw.contains("\"display_name\""), "manifest uses snake_case")
     expect(raw.contains("\"walk_atlas_file\""), "walk file is recorded")
 
