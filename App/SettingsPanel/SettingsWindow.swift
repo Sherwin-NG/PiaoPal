@@ -51,15 +51,22 @@ final class SettingsWindowController {
     private let updater = Updater()
     private var wrappedController: WrappedWindowController?
     private var marketplaceController: MarketplaceWindowController?
+    private var customPetController: CustomPetWindowController?
     private var achievementsController: AchievementsWindowController?
     private var languageCancellable: AnyCancellable?
 
     init(renderer: MetalRenderer, langManager: LanguageManager) {
         let wrapped      = WrappedWindowController(renderer: renderer, langManager: langManager)
-        let marketplace  = MarketplaceWindowController(renderer: renderer, langManager: langManager)
+        let customPet    = CustomPetWindowController(renderer: renderer, langManager: langManager)
+        let marketplace  = MarketplaceWindowController(
+            renderer: renderer,
+            langManager: langManager,
+            onCreateCustomPet: { customPet.show() }
+        )
         let achievements = AchievementsWindowController(manager: renderer.achievementManager, langManager: langManager)
         self.wrappedController      = wrapped
         self.marketplaceController  = marketplace
+        self.customPetController    = customPet
         self.achievementsController = achievements
 
         let view = SettingsView(
@@ -67,6 +74,7 @@ final class SettingsWindowController {
             updater:  updater,
             onShowWrapped:        { wrapped.show() },
             onShowMarketplace:    { marketplace.show() },
+            onShowCustomPet:      { customPet.show() },
             onShowAchievements:   { achievements.show() }
         )
         .environmentObject(langManager)

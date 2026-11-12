@@ -82,6 +82,7 @@ final class MarketplaceStore: ObservableObject {
 struct MarketplaceView: View {
     @EnvironmentObject var lang: LanguageManager
     @ObservedObject var store: MarketplaceStore
+    var onCreateCustomPet: () -> Void = {}
 
     private let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
 
@@ -91,6 +92,22 @@ struct MarketplaceView: View {
 
             VStack(spacing: 0) {
                 header
+                Button { onCreateCustomPet() } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "photo.on.rectangle.angled")
+                        Text(lang["marketplace.custom_pet"])
+                        Spacer()
+                        Image(systemName: "chevron.right").font(.caption.weight(.semibold))
+                    }
+                    .font(.callout.weight(.semibold))
+                    .foregroundStyle(Color.piaInk)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(Color.piaWash, in: RoundedRectangle(cornerRadius: 10))
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 12)
                 Divider().opacity(0.3)
 
                 if store.isLoading && store.skins.isEmpty {
