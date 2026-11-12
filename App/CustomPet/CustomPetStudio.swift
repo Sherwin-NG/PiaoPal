@@ -118,7 +118,7 @@ final class CustomPetStudioModel: ObservableObject {
     func generate(retryFailedOnly: Bool) {
         persistSettings()
         guard photosReady else { return }
-        guard let settings = settings.validated() else {
+        guard settings.validated() != nil else {
             failure = .settings
             step = .failed
             return
@@ -131,12 +131,7 @@ final class CustomPetStudioModel: ObservableObject {
             step = .failed
             return
         }
-        guard let provider = CustomPetProviders.make(
-            settings: CustomPetProviderSettings(
-                kind: providerKind, model: settings.model, baseURL: settings.baseURL, quality: settings.quality
-            ),
-            apiKey: key
-        ) else {
+        guard let provider = CustomPetProviders.make(settings: settings, apiKey: key) else {
             failure = .settings
             step = .failed
             return
@@ -164,7 +159,7 @@ final class CustomPetStudioModel: ObservableObject {
     }
 
     func save(defaultName: String) -> Bool {
-        guard let previewPNG else { return false }
+        guard let atlas = previewPNG else { return false }
         let name = CustomPetStore.normalizedName(displayName) ?? CustomPetStore.normalizedName(defaultName) ?? "Pet"
         let id = CustomPetStore.makeID()
         let store = CustomPetStore(directory: SkinManager.customSpritesDir)
@@ -172,7 +167,7 @@ final class CustomPetStudioModel: ObservableObject {
             try store.save(
                 id: id,
                 displayName: name,
-                mainPNG: previewPNG,
+                mainPNG: atlas,
                 walkPNG: keptWalkPNG,
                 provider: providerKind.rawValue,
                 model: modelName.trimmingCharacters(in: .whitespacesAndNewlines)
