@@ -1,13 +1,13 @@
 # Windows 版
 
-PiaoPal v0.2.1 提供原生 Windows 桌宠，复用 Mac 版的六款精灵素材。推荐 Windows 11；使用 .NET 10 支持范围内的 Windows 10 LTSC/Enterprise 版本时，请参阅 [Microsoft 系统支持表](https://learn.microsoft.com/en-us/dotnet/core/install/windows)。不承诺支持所有历史 Windows 10 消费者版本。
+PiaoPal v0.3.0 提供原生 Windows 桌宠，复用 Mac 版的六款精灵素材。推荐 Windows 11；使用 .NET 10 支持范围内的 Windows 10 LTSC/Enterprise 版本时，请参阅 [Microsoft 系统支持表](https://learn.microsoft.com/en-us/dotnet/core/install/windows)。不承诺支持所有历史 Windows 10 消费者版本。
 
 ## 下载与启动
 
 | 电脑 | 下载文件 |
 | --- | --- |
-| Intel / AMD 64 位电脑 | `PiaoPal-v0.2.1-Windows-x64.zip` |
-| Windows on ARM，如骁龙电脑 | `PiaoPal-v0.2.1-Windows-arm64.zip` |
+| Intel / AMD 64 位电脑 | `PiaoPal-v0.3.0-Windows-x64.zip` |
+| Windows on ARM，如骁龙电脑 | `PiaoPal-v0.3.0-Windows-arm64.zip` |
 
 从 [GitHub Releases](https://github.com/Sherwin-NG/PiaoPal/releases/latest) 下载，将 ZIP **完整解压**到固定目录，再运行 `PiaoPal.exe`。运行环境已包含，无需管理员权限或单独安装 .NET；不要在压缩包预览中启动，也不要仅复制 exe。
 
@@ -17,13 +17,14 @@ PiaoPal v0.2.1 提供原生 Windows 桌宠，复用 Mac 版的六款精灵素材
 
 ## 功能范围
 
-| 功能 | Windows v0.2.1 |
+| 功能 | Windows v0.3.0 |
 | --- | --- |
 | 六款内置伙伴、八方向动画、跟随鼠标 | 已提供 |
 | 待机、挠痒、自然睡眠、手动休息与唤醒 | 已提供 |
 | 昵称、大小、速度、简体中文 / English | 已提供 |
 | 里程、等级、启动次数、连续相伴天数 | 已提供 |
 | 本地保存；约每 30 秒、睡眠/锁屏/失去焦点和正常退出时原子保存统计 | 已提供 |
+| 单帧绘制失败或窗口坐标无效时跳过该帧，进程继续运行 | 已提供 |
 | 多屏工作区、负坐标、显示恢复、找回宠物 | 已提供 |
 | 手动检查 GitHub 更新 | 已提供 |
 | Mac 的 32 项成就、卡片导出、六页回顾、激光逗猫、自定义素材目录、登录时启动 | 尚未移植 |
@@ -43,7 +44,7 @@ Windows 六款伙伴共用连续跟随逻辑；飘飘使用四帧步态表，其
 ```powershell
 dotnet run --project Windows/PiaoPal.Core.Tests/PiaoPal.Core.Tests.csproj -c Release
 pwsh -File scripts/test-windows.ps1 -RuntimeIdentifier win-x64
-pwsh -File scripts/package-windows.ps1 -RuntimeIdentifier win-x64 -Version 0.2.1
+pwsh -File scripts/package-windows.ps1 -RuntimeIdentifier win-x64 -Version 0.3.0
 ```
 
 ARM64 主机使用 `win-arm64`。核心测试可在 macOS/Linux 上运行；桌面测试必须在对应架构的 Windows 上运行。CI 使用 GitHub 官方 `windows-2025`（x64）和 `windows-11-arm`（ARM64）运行器，[官方运行器列表](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)可查。

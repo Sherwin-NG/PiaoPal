@@ -5,7 +5,7 @@
 
 以家里的猫咪飘飘为灵感，为 Mac 和 Windows 带来一位像素伙伴。
 
-**macOS 13+ · Windows x64 / ARM64 · 0.2.1**
+**macOS 13+ · Windows x64 / ARM64 · 0.3.0**
 
 [下载](https://github.com/Sherwin-NG/PiaoPal/releases/latest) · [反馈问题](https://github.com/Sherwin-NG/PiaoPal/issues) · [构建说明](docs/development.md) · [许可与致谢](THIRD_PARTY_NOTICES.md)
 </div>
@@ -14,7 +14,7 @@ PiaoPal 是 [Sherwin-NG](https://github.com/Sherwin-NG) 独立维护的桌面宠
 
 Mac 与 Windows 共用六款内置宠物素材：**飘飘 PiaoPiao、团团 TuanTuan、豆豆 Dodo、斑斑 BanBan、桃桃 TaoTao、暮暮 MuMu**。部分底层实现与既有素材按原开源许可使用，完整来源见[第三方说明](THIRD_PARTY_NOTICES.md)。
 
-**0.2.1** 新增 Windows 原生桌宠，同时提供 **x64 和 ARM64** 免安装包，包含鼠标跟随、托盘设置、休息与唤醒、显示器恢复和本地进度保存。两平台首次默认大小均为 **1 倍**。Mac 保留 v0.2.0 的运行修复，详见[本版说明](releases/v0.2.1.md)。
+**0.3.0** 修复 macOS 与 Windows 上宠物自行退出的问题。相伴统计会定期写入，并在睡眠和退出前再保存一次，崩溃后已写入的进度可以恢复。Windows 继续提供 **x64 和 ARM64** 免安装包，两平台首次默认大小仍为 **1 倍**。详见[本版说明](releases/v0.3.0.md)。
 
 ## 下载和使用
 
@@ -22,10 +22,10 @@ Mac 与 Windows 共用六款内置宠物素材：**飘飘 PiaoPiao、团团 Tuan
 
 | 文件 | 用途 |
 | --- | --- |
-| `PiaoPal-v0.2.1-macOS-universal.dmg` | 推荐。打开后把 PiaoPal 拖入 Applications |
-| `PiaoPal-v0.2.1-macOS-universal.zip` | 解压后把 PiaoPal.app 放入 Applications |
-| `PiaoPal-v0.2.1-Windows-x64.zip` | Windows Intel / AMD 电脑，解压整个文件夹后运行 PiaoPal.exe |
-| `PiaoPal-v0.2.1-Windows-arm64.zip` | Windows on ARM 电脑，解压整个文件夹后运行 PiaoPal.exe |
+| `PiaoPal-v0.3.0-macOS-universal.dmg` | 推荐。打开后把 PiaoPal 拖入 Applications |
+| `PiaoPal-v0.3.0-macOS-universal.zip` | 解压后把 PiaoPal.app 放入 Applications |
+| `PiaoPal-v0.3.0-Windows-x64.zip` | Windows Intel / AMD 电脑，解压整个文件夹后运行 PiaoPal.exe |
+| `PiaoPal-v0.3.0-Windows-arm64.zip` | Windows on ARM 电脑，解压整个文件夹后运行 PiaoPal.exe |
 | `SHA256SUMS.txt` | 核对以上四个安装包的完整性 |
 
 Mac 通用包支持 Apple Silicon 和 Intel，要求 macOS 13+。Windows 推荐 Windows 11，另兼容 .NET 10 支持范围内的 Windows 10 LTSC/Enterprise 版本；提供原生 x64 与 ARM64 包并附带运行环境。选择与电脑架构相符的 ZIP；不要只复制 exe。Windows 使用和支持范围见[Windows 说明](docs/windows.md)。GitHub 自动附带的 **Source code** 是源码，不是安装包。
@@ -69,7 +69,7 @@ open PiaoPal.xcodeproj
 
 ```sh
 bash scripts/test-macos.sh
-bash scripts/package-macos.sh 0.2.1
+bash scripts/package-macos.sh 0.3.0
 ```
 
 输出位于 `dist/`。打包流程构建 arm64 + x86_64、校验应用签名和 DMG，并生成 SHA-256 文件。它使用运行时 Metal 着色器编译路径，仍由 Metal 渲染；不要求额外安装独立 Metal Toolchain。

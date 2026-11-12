@@ -34,7 +34,7 @@ internal sealed record LaunchOptions(string DataDirectory, string? SmokeOutput, 
 
 internal static class Program
 {
-    internal static string Version => typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0] ?? "0.2.1";
+    internal static string Version => typeof(Program).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0] ?? "0.3.0";
     [STAThread]
     private static int Main(string[] args)
     {
