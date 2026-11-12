@@ -27,7 +27,7 @@ final class CVDisplayLinkManager: NSObject {
 
     private static let reconfigCallback: CGDisplayReconfigurationCallBack = { _, flags, user in
         guard let user else { return }
-        let target = Unmanaged<ReconfigTarget>.fromOpaque(user).takeUnretainedValue()
+        let target = Unmanaged<CVDisplayLinkManager.ReconfigTarget>.fromOpaque(user).takeUnretainedValue()
         target.manager?.handleDisplayReconfiguration(flags)
     }
 
