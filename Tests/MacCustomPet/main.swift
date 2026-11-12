@@ -90,9 +90,9 @@ do {
     }
     let image = RGBAImageCodec.cgImage(data: source)!
     let read = RGBAImageCodec.pixelsTopLeft(image)
-    expect(read[0] == 255 && read[3] == 255, "top-left pixel was not preserved")
+    expect(read[0] == 255 && read[3] == 255, "top-left pixel was not preserved r=\(read[0]) a=\(read[3]) g=\(read[1]) b=\(read[2])")
     let green = (2 * 4 + 1) * 4
-    expect(read[green + 1] == 255, "pixel (1,2) was not preserved")
+    expect(read[green + 1] == 255, "pixel (1,2) was not preserved g=\(read[green + 1]) a=\(read[green + 3])")
     let cropped = image.cropping(to: CGRect(x: 1, y: 2, width: 1, height: 1))!
     let croppedPixels = RGBAImageCodec.pixelsTopLeft(cropped)
     expect(croppedPixels[1] == 255, "CGImage crop and pixel reader disagree")

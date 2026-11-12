@@ -15,8 +15,8 @@ struct RGBAImage: Equatable {
 }
 
 enum RGBAImageCodec {
-    /// Reads pixels in CGImage top-left order. The vertical flip matches the usual
-    /// bitmap-context recipe so buffer row 0 is the top row `CGImage.cropping` uses.
+    /// Reads pixels in CGImage top-left order. Drawing without a vertical flip matches
+    /// `SkinManager`, which uploads this buffer with row 0 as the top of the texture.
     static func pixelsTopLeft(_ image: CGImage) -> [UInt8] {
         let width = image.width
         let height = image.height
@@ -30,8 +30,6 @@ enum RGBAImageCodec {
             space: CGColorSpaceCreateDeviceRGB(),
             bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
         ) else { return pixels }
-        context.translateBy(x: 0, y: CGFloat(height))
-        context.scaleBy(x: 1, y: -1)
         context.interpolationQuality = .none
         context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
         return pixels
