@@ -8,18 +8,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var langManager = LanguageManager()
     private var onboardingController: OnboardingWindowController?
     private var achievementNotifications: AchievementNotificationController?
+    /// Retained so App Nap and automatic termination cannot collect this menu-bar process.
+    private var lifetimeActivity: NSObjectProtocol?
     private let runDiagnostics = AppRunDiagnostics { message in
         Log.lifecycle.notice("\(message, privacy: .public)")
     }
 
     func applicationWillFinishLaunching(_ notification: Notification) {
         runDiagnostics.recordLaunchAttempt()
-        let running = NSRunningApplication.runningApplications(
-            withBundleIdentifier: Bundle.main.bundleIdentifier ?? ""
-        )
-        if running.count > 1 {
+        let bundleID = Bundle.main.bundleIdentifier
+        let peers = (bundleID?.isEmpty == false)
+            ? NSRunningApplication.runningApplications(withBundleIdentifier: bundleID!).map {
+                LaunchInstancePolicy.Peer(processID: $0.processIdentifier, isTerminated: $0.isTerminated)
+            }
+            : []
+        if LaunchInstancePolicy.shouldExitAsDuplicate(
+            bundleIdentifier: bundleID,
+            currentProcessID: ProcessInfo.processInfo.processIdentifier,
+            peers: peers
+        ) {
             runDiagnostics.recordTerminationRequest(.duplicateInstance)
-            running.first(where: { $0 != NSRunningApplication.current })?.activate(options: .activateIgnoringOtherApps)
+            NSRunningApplication.runningApplications(withBundleIdentifier: bundleID ?? "")
+                .first { $0.processIdentifier != ProcessInfo.processInfo.processIdentifier && !$0.isTerminated }?
+                .activate(options: [.activateIgnoringOtherApps])
             NSApp.terminate(nil)
         }
     }
@@ -41,10 +52,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         runDiagnostics.markRunning()
+        // LSUIElement apps are eligible for App Nap, and a clean process can be
+        // sudden-terminated without applicationWillTerminate. Either one looks
+        // like the pet quitting by itself and skips the final statistics flush.
+        lifetimeActivity = ProcessInfo.processInfo.beginActivity(
+            options: [.userInitiatedAllowingIdleSystemSleep],
+            reason: "PiaoPal menu bar companion stays running"
+        )
+        ProcessInfo.processInfo.disableSuddenTermination()
+        ProcessInfo.processInfo.disableAutomaticTermination("PiaoPal menu bar companion stays running")
 
         overlayWindow = OverlayWindow()
-        let union = OverlayWindow.unionFrame()
-        renderer.view.frame = NSRect(origin: .zero, size: union.size)
+        renderer.view.frame = NSRect(origin: .zero, size: overlayWindow.frame.size)
         renderer.view.autoresizingMask = [.width, .height]
         let vc = NSViewController()
         vc.view = renderer.view

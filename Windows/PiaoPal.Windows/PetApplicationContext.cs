@@ -21,10 +21,10 @@ internal sealed class PetApplicationContext : ApplicationContext
     private readonly List<string> smokeChecks=[];
     private SettingsWindow? settings;
     private ContextMenuStrip? menu;
-    private double lastFrame, lastSave, lastStats, lastSaveWarning=-300, smokeChildStarted;
+    private double lastFrame, lastSave, lastStats, lastSaveWarning=-300, lastFrameErrorLog=-30, smokeChildStarted;
     private Process? smokeChild;
     private int showRequests, smokeShowBaseline, smokeSessionBaseline;
-    private bool stopped, suspended, systemSuspended, trayDisposed, smokeCompleted;
+    private bool stopped, suspended, systemSuspended, sessionLocked, trayDisposed, smokeCompleted;
     private int smokeStage;
     private string? smokeError;
     private long renderedFrames;
@@ -51,6 +51,7 @@ internal sealed class PetApplicationContext : ApplicationContext
         RebuildTray();
         SystemEvents.DisplaySettingsChanged+=DisplayChanged;
         SystemEvents.PowerModeChanged+=PowerChanged;
+        SystemEvents.SessionSwitch+=SessionSwitched;
         SystemEvents.SessionEnding+=SessionEnding;
         timer.Tick+=OnTick;
         timer.Start();
@@ -124,30 +125,57 @@ internal sealed class PetApplicationContext : ApplicationContext
                 if(frame.StartedScratch) Store.RecordScratch();
                 UpdateDpi(frame.Position);
                 int size=(int)Math.Round(64*Motion.Scale*Motion.PixelsPerDip);
-                overlay.Present(Sprites.Frame(Store.Settings.SkinId,frame.Pose,size),Motion.Position,size);
+                if(!overlay.Present(Sprites.Frame(Store.Settings.SkinId,frame.Pose,size),Motion.Position,size))
+                    NotePresentSkipped();
                 if(now-lastStats>=1) { lastStats=now; settings?.RefreshStats(); overlay.EnsureTopmost(); }
             }
             if(now-lastSave>=30)
             {
                 lastSave=now;
-                try { Store.Save(); }
-                catch(Exception error) when(error is IOException or UnauthorizedAccessException)
-                {
-                    log.Write("periodic_save_failed_will_retry "+error.Message);
-                    if(!options.IsSmoke && now-lastSaveWarning>=300)
-                    {
-                        lastSaveWarning=now;
-                        tray.ShowBalloonTip(5000,"PiaoPal",T("相伴记录暂时无法保存，稍后会自动重试。","Your progress could not be saved right now. PiaoPal will retry."),ToolTipIcon.Warning);
-                    }
-                }
+                if(!TrySave("interval")) WarnSaveFailed(now);
             }
             if(options.IsSmoke) SmokeTick(now);
         }
-        catch(Exception error) { Fail(error); }
+        catch(Exception error) { HandleFrameError(error); }
+    }
+
+    private void NotePresentSkipped()
+    {
+        double now=clock.Elapsed.TotalSeconds;
+        if(now-lastFrameErrorLog<30) return;
+        lastFrameErrorLog=now;
+        log.Write("layered_present_skipped");
+    }
+
+    private void HandleFrameError(Exception error)
+    {
+        if(options.IsSmoke) { Fail(error); return; }
+        double now=clock.Elapsed.TotalSeconds;
+        if(now-lastFrameErrorLog<30) return;
+        lastFrameErrorLog=now;
+        log.Write("frame_skipped "+error.GetType().Name+" "+error.Message);
+    }
+
+    internal bool TrySave(string reason)
+    {
+        try { Store.Save(); log.Write("stats_saved reason="+reason); return true; }
+        catch(Exception error) when(error is IOException or UnauthorizedAccessException or ObjectDisposedException)
+        {
+            log.Write("save_failed reason="+reason+" "+error.Message);
+            return false;
+        }
+    }
+
+    private void WarnSaveFailed(double now)
+    {
+        if(options.IsSmoke || now-lastSaveWarning<300) return;
+        lastSaveWarning=now;
+        tray.ShowBalloonTip(5000,"PiaoPal",T("相伴记录暂时无法保存，稍后会自动重试。","Your progress could not be saved right now. PiaoPal will retry."),ToolTipIcon.Warning);
     }
 
     private void UpdateDpi(DesktopPoint position)
     {
+        if(!position.IsValid) return;
         var point=new NativeMethods.Point((int)position.X,(int)position.Y);
         nint monitor=NativeMethods.MonitorFromPoint(point,2);
         if(monitor!=0 && NativeMethods.GetDpiForMonitor(monitor,0,out uint dpi,out _)==0 && dpi>=48 && dpi<=768)
@@ -159,32 +187,73 @@ internal sealed class PetApplicationContext : ApplicationContext
         var screens=Screen.AllScreens.Select(s=>s.WorkingArea).Where(r=>r.Width>0 && r.Height>0)
             .Select(r=>new DesktopRect(r.X,r.Y,r.Width,r.Height)).ToArray();
         Motion.SetScreens(screens);
-        suspended=systemSuspended || screens.Length==0;
+        suspended=systemSuspended || sessionLocked || screens.Length==0;
         if(suspended) { overlay.Hide(); return; }
         if(locate)
         {
             Point cursor=Cursor.Position; UpdateDpi(new DesktopPoint(cursor.X,cursor.Y));
             Motion.Relocate(new DesktopPoint(cursor.X+80*Motion.PixelsPerDip,cursor.Y+80*Motion.PixelsPerDip));
         }
-        int size=(int)Math.Round(64*Motion.Scale*Motion.PixelsPerDip);
-        overlay.Present(Sprites.Frame(Store.Settings.SkinId,Motion.GetPose(),size),Motion.Position,size);
+        try
+        {
+            int size=(int)Math.Round(64*Motion.Scale*Motion.PixelsPerDip);
+            _=overlay.Present(Sprites.Frame(Store.Settings.SkinId,Motion.GetPose(),size),Motion.Position,size);
+        }
+        catch(Exception error) { HandleFrameError(error); }
         log.Write("display_layout_refreshed screens="+screens.Length);
     }
     private void Dispatch(Action action)
     {
         if(stopped || Dispatcher.IsDisposed) return;
-        try { Dispatcher.BeginInvoke(action); }
+        try
+        {
+            Dispatcher.BeginInvoke((Action)(() =>
+            {
+                if(stopped) return;
+                try { action(); }
+                catch(Exception error) { HandleFrameError(error); }
+            }));
+        }
         catch(InvalidOperationException) when(stopped || Dispatcher.IsDisposed) { }
     }
     private void DisplayChanged(object? sender,EventArgs e) => Dispatch(()=> { RefreshScreens(); if(!suspended) overlay.Show(); });
     private void PowerChanged(object sender,PowerModeChangedEventArgs e) => Dispatch(()=>
-    {
-        if(e.Mode==PowerModes.Suspend) { systemSuspended=true; suspended=true; overlay.Hide(); log.Write("system_suspending"); }
-        else if(e.Mode==PowerModes.Resume)
+        ApplyLifetime(e.Mode switch
         {
-            systemSuspended=false; lastFrame=clock.Elapsed.TotalSeconds; RefreshScreens(); if(!suspended) overlay.Show(); log.Write("system_resumed");
+            PowerModes.Suspend => CompanionLifetimeEvent.Suspend,
+            PowerModes.Resume => CompanionLifetimeEvent.Resume,
+            _ => CompanionLifetimeEvent.Other
+        }));
+    private void SessionSwitched(object sender,SessionSwitchEventArgs e) => Dispatch(()=>
+        ApplyLifetime(e.Reason switch
+        {
+            SessionSwitchReason.SessionLock or SessionSwitchReason.RemoteDisconnect or SessionSwitchReason.ConsoleDisconnect
+                => CompanionLifetimeEvent.Lock,
+            SessionSwitchReason.SessionUnlock or SessionSwitchReason.RemoteConnect or SessionSwitchReason.ConsoleConnect
+                => CompanionLifetimeEvent.Unlock,
+            SessionSwitchReason.SessionLogoff => CompanionLifetimeEvent.Logoff,
+            _ => CompanionLifetimeEvent.Other
+        }));
+    private void ApplyLifetime(CompanionLifetimeEvent kind)
+    {
+        var reaction=CompanionLifetime.React(kind);
+        if(reaction.SaveStats && !TrySave(kind.ToString())) WarnSaveFailed(clock.Elapsed.TotalSeconds);
+        switch(kind)
+        {
+            case CompanionLifetimeEvent.Suspend:
+                systemSuspended=true; log.Write("system_suspending"); break;
+            case CompanionLifetimeEvent.Resume:
+                systemSuspended=false; lastFrame=clock.Elapsed.TotalSeconds; log.Write("system_resumed"); break;
+            case CompanionLifetimeEvent.Lock:
+                sessionLocked=true; log.Write("session_locked"); break;
+            case CompanionLifetimeEvent.Unlock:
+                sessionLocked=false; lastFrame=clock.Elapsed.TotalSeconds; log.Write("session_unlocked"); break;
+            case CompanionLifetimeEvent.Logoff:
+                sessionLocked=true; log.Write("session_logoff"); break;
         }
-    });
+        if(reaction.SuspendRendering) { suspended=true; overlay.Hide(); }
+        if(reaction.ResumeRendering) { RefreshScreens(); if(!suspended) overlay.Show(); }
+    }
     private void SessionEnding(object sender,SessionEndingEventArgs e)
     {
         if(stopped) return;
@@ -201,7 +270,7 @@ internal sealed class PetApplicationContext : ApplicationContext
             // A busy UI cannot hold up session ending indefinitely.
             if(completed.Task.Wait(TimeSpan.FromSeconds(2))) return;
             log.Write("session_end_ui_timeout; flushing statistics directly");
-            Store.Save();
+            TrySave("session_ending_timeout");
         }
         catch(ObjectDisposedException) { /* Normal shutdown already disposed the store/window. */ }
         catch(Exception error) when(error is IOException or UnauthorizedAccessException or InvalidOperationException)
@@ -225,6 +294,7 @@ internal sealed class PetApplicationContext : ApplicationContext
         }
         SystemEvents.DisplaySettingsChanged-=DisplayChanged;
         SystemEvents.PowerModeChanged-=PowerChanged;
+        SystemEvents.SessionSwitch-=SessionSwitched;
         SystemEvents.SessionEnding-=SessionEnding;
         if(settings is not null && !settings.IsDisposed) settings.Dispose();
         tray.Visible=false; tray.Dispose(); trayDisposed=true;

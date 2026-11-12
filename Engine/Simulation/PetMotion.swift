@@ -33,7 +33,10 @@ let spriteSets: [Anim: [(Int, Int)]] = [
 /// Both the original 32 px and PiaoPiao's 64 px cells use this normalized layout.
 func spriteUV(_ anim: Anim, frame: Int) -> SIMD4<Float> {
     let frames = spriteSets[anim] ?? [(3, 3)]
-    let (col, row) = frames[frame % frames.count]
+    let count = frames.count
+    // A negative remainder would trap on the array index and kill the process.
+    let index = count > 0 ? ((frame % count) + count) % count : 0
+    let (col, row) = frames[index]
     return SIMD4<Float>(Float(col) / 8, Float(row) / 4, 1.0 / 8, 1.0 / 4)
 }
 
@@ -465,8 +468,11 @@ final class PetMotion {
             // tiny cursor movement from flipping the pet between adjacent poses.
             if abs(difference) <= sector / 2 + 8 * .pi / 180 { return }
         }
-        let index = (Int((angle / sector).rounded()) + 8) % 8
-        facing = directions[index]
+        let rounded = (angle / sector).rounded()
+        // Int(nan) and Int(+inf) are fatal traps. atan2 is bounded, but a
+        // poisoned velocity must not take the process down.
+        guard rounded.isFinite, let bucket = Int(exactly: rounded) else { return }
+        facing = directions[(bucket % 8 + 8) % 8]
     }
 
     private func length(_ vector: SIMD2<Float>) -> Float {
@@ -573,7 +579,7 @@ final class PetMotion {
             if idleAnimFrame > 192 { resetIdle() }
 
         case .scratchSelf, .scratchWallN, .scratchWallS, .scratchWallE, .scratchWallW:
-            legacyPose(idleAnimation!, frame: idleAnimFrame)
+            if let idleAnimation { legacyPose(idleAnimation, frame: idleAnimFrame) }
             if idleAnimFrame > 9 { resetIdle() }
 
         default:

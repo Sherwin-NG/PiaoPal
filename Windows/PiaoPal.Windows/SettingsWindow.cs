@@ -61,6 +61,7 @@ internal sealed class SettingsWindow : Form
         quit.Click+=(_,_)=> {SaveValues(); app.Shutdown("user_requested");};
         checkUpdate.Click+=async (_,_)=>await CheckUpdates(); download.Click+=(_,_)=>OpenReleasePage();
         FormClosing+=(_,_)=>SaveValues();
+        Deactivate+=(_,_)=>app.TrySave("settings_resign");
         RefreshStats();
     }
     private static void AddRow(TableLayoutPanel grid,Label label,Control value)

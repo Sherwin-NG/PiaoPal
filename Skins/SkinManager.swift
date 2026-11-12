@@ -16,8 +16,9 @@ final class SkinManager {
     // MARK: – Custom sprites directory (Application Support)
 
     static var customSpritesDir: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-            .appendingPathComponent("PiaoPal/Sprites")
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? URL(fileURLWithPath: NSTemporaryDirectory())
+        return base.appendingPathComponent("PiaoPal/Sprites")
     }
 
     /// Returns the URL for a skin's GIF — custom (App Support) takes priority over bundle.

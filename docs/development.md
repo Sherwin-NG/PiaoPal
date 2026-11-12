@@ -31,7 +31,7 @@ bash scripts/package-macos.sh 0.2.1
 
 测试在独立临时目录编译并运行，不以测试数据覆盖真实用户设置。它们检查语言识别与格式占位符、成就文案、素材尺寸与动画映射、图标、运动状态与步态时序，以及更新器的版本比较和错误处理。`Tests/MacMotion` 核对真实位移、待机、异常输入恢复及缩屏后停靠宠物重定位；`Tests/MacStats` 检查短会话跨进程保存、重复保存和并发里程累积；`Tests/MacLifecycle` 检查正常退出、未正常结束的上次会话及多实例诊断标记的隔离。后两组使用独立偏好域，均由 `scripts/test-macos.sh` 执行。
 
-运行诊断只写本机系统日志，子系统为 `io.github.sherwinng.PiaoPal`。`lifecycle` 类别记录启动、退出请求、退出完成及上次缺少正常退出记录；该标记也可能由强制退出、断电等原因产生，不能直接判定为崩溃。`render` 类别记录显示器休眠、恢复和宠物重定位。屏幕变化时在主线程捕获几何信息，渲染线程使用受锁保护的快照；没有有效屏幕时暂停绘制，恢复后将宠物移回实际存在的屏幕，重定位不累计步行里程。
+运行诊断只写本机系统日志，子系统为 `io.github.sherwinng.PiaoPal`。`lifecycle` 类别记录启动、退出请求、退出完成及上次缺少正常退出记录；该标记也可能由强制退出、断电等原因产生，不能直接判定为崩溃。`render` 类别记录显示器休眠、恢复和宠物重定位。`CVDisplayLink` 只在显示线程上累计帧间隔并切回主线程；Metal 的 `nextDrawable`、窗口 frame 和显示器几何都在主线程更新。显示配置开始变化或屏幕休眠时先停下 display link，结束后再重建。没有有效屏幕、Metal 设备被移除，或联合分辨率超过单张 drawable 上限时暂停绘制而不是让进程退出；恢复后将宠物移回实际存在的屏幕，重定位不累计步行里程。相伴里程仍写入原来的偏好键，并每分钟以及在睡眠、失去焦点和关机前原子写入 `~/Library/Application Support/PiaoPal/cat-stats.json`。
 
 打包脚本调用 `PiaoPal.xcodeproj` 的 `PiaoPal` scheme，构建 Apple Silicon 与 Intel，进行 ad-hoc 签名，并输出 DMG、ZIP 和 `SHA256SUMS.txt`。每次运行使用新的暂存目录，已有产物不会作为输入。
 

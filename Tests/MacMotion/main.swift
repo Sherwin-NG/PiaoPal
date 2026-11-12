@@ -489,4 +489,8 @@ for profile in [PetMotionProfile.piaopiao, .legacy] {
     }
 }
 
+precondition(spriteUV(.scratchSelf, frame: -1) == spriteUV(.scratchSelf, frame: 2),
+             "a negative sprite index wraps instead of trapping")
+precondition(spriteUV(.E, frame: 5) == spriteUV(.E, frame: 1), "positive sprite indexes stay on their existing cells")
+
 print("PASS: responsive continuous movement, readable gait cadence, speed/size/refresh-rate matrix, arrival/turn hysteresis, dock/wake transitions, stable breathing, walking atlas, legacy boundary distance/rest/recovery, invalid-input recovery, display relocation, safe animation indexing and serialized UI/display access")

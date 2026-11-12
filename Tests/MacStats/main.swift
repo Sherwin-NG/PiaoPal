@@ -56,5 +56,87 @@ if CommandLine.arguments.count == 3 {
         child.waitUntilExit()
         precondition(child.terminationStatus == 0, "Statistics subprocess failed: \(mode)")
     }
-    print("PASS: final distance saving, repeated-save idempotence, concurrent accumulation, restored XP and cross-process short-session persistence")
+    precondition(CatStats.snapshotInterval == 60, "lifetime statistics flush about once a minute")
+    let snapshotDirectory = FileManager.default.temporaryDirectory
+        .appendingPathComponent("piaopal-stats-\(UUID().uuidString)", isDirectory: true)
+    defer { try? FileManager.default.removeItem(at: snapshotDirectory) }
+    let snapshotURL = snapshotDirectory.appendingPathComponent("cat-stats.json")
+    func snapshotDefaults(_ name: String) -> UserDefaults {
+        let isolated = UserDefaults(suiteName: suite + "." + name)!
+        isolated.removePersistentDomain(forName: suite + "." + name)
+        return isolated
+    }
+    let crashDefaults = snapshotDefaults("crash")
+    let crashed = CatStats(defaults: crashDefaults, snapshotURL: snapshotURL)
+    crashed.addDistance(500)
+    crashed.savePendingDistance()
+    let revived = CatStats(defaults: snapshotDefaults("revived"), snapshotURL: snapshotURL)
+    near(revived.distancePoints, 500, "atomic snapshot survives when UserDefaults were not flushed")
+    _ = revived.level
+    _ = revived.xpProgress
+    _ = revived.xpLabel
+    let names = try FileManager.default.contentsOfDirectory(at: snapshotDirectory, includingPropertiesForKeys: nil)
+    precondition(names.allSatisfy { !$0.lastPathComponent.contains(".tmp") }, "atomic save leaves no temporary files")
+
+    let mergedURL = snapshotDirectory.appendingPathComponent("merged.json")
+    try """
+    {"version":1,"distancePoints":80,"naps":2,"scratches":1,"streak":4,"streakDate":0,"dockedCount":3,"laserSessions":1,"usedSkinIDs":["piaopiao"],"firstLaunch":1700000000}
+    """.write(to: mergedURL, atomically: true, encoding: .utf8)
+    let mergedDefaults = snapshotDefaults("merged")
+    mergedDefaults.set(20.0, forKey: distanceKey)
+    let merged = CatStats(defaults: mergedDefaults, snapshotURL: mergedURL)
+    near(merged.distancePoints, 80, "newer snapshot distance wins over a stale preference")
+    precondition(merged.naps == 2 && merged.scratches == 1 && merged.dockedCount == 3 && merged.laserSessions == 1,
+                 "snapshot counters merge with preferences")
+    precondition(merged.usedSkinIDs.contains("piaopiao"), "snapshot keeps recorded companions")
+    let preferredURL = snapshotDirectory.appendingPathComponent("preferred.json")
+    try """
+    {"version":1,"distancePoints":40,"naps":0,"scratches":0,"streak":1,"streakDate":0,"dockedCount":0,"laserSessions":0,"usedSkinIDs":[],"firstLaunch":1700000000}
+    """.write(to: preferredURL, atomically: true, encoding: .utf8)
+    let preferredDefaults = snapshotDefaults("preferred")
+    preferredDefaults.set(100.0, forKey: distanceKey)
+    let preferred = CatStats(defaults: preferredDefaults, snapshotURL: preferredURL)
+    near(preferred.distancePoints, 100, "a higher preference value is kept when the snapshot is older")
+
+    let corruptURL = snapshotDirectory.appendingPathComponent("corrupt.json")
+    try Data("not-json".utf8).write(to: corruptURL)
+    let corruptDefaults = snapshotDefaults("corrupt")
+    corruptDefaults.set(40.0, forKey: distanceKey)
+    let corrupt = CatStats(defaults: corruptDefaults, snapshotURL: corruptURL)
+    near(corrupt.distancePoints, 40, "a corrupt snapshot does not discard saved preferences")
+    let futureURL = snapshotDirectory.appendingPathComponent("future.json")
+    try """
+    {"version":2,"distancePoints":999,"naps":0,"scratches":0,"streak":1,"streakDate":0,"dockedCount":0,"laserSessions":0,"usedSkinIDs":[],"firstLaunch":1700000000}
+    """.write(to: futureURL, atomically: true, encoding: .utf8)
+    let futureDefaults = snapshotDefaults("future")
+    futureDefaults.set(5.0, forKey: distanceKey)
+    let future = CatStats(defaults: futureDefaults, snapshotURL: futureURL)
+    near(future.distancePoints, 5, "an unknown snapshot version is ignored")
+
+    let hugeURL = snapshotDirectory.appendingPathComponent("huge.json")
+    try """
+    {"version":1,"distancePoints":1e20,"naps":0,"scratches":0,"streak":1,"streakDate":0,"dockedCount":0,"laserSessions":0,"usedSkinIDs":[],"firstLaunch":1700000000}
+    """.write(to: hugeURL, atomically: true, encoding: .utf8)
+    let huge = CatStats(defaults: snapshotDefaults("huge"), snapshotURL: hugeURL)
+    near(huge.distancePoints, 1e15, "non-finite-scale distance is capped before level math")
+    precondition(huge.level >= 1, "level stays representable")
+    precondition(huge.xpProgress.isFinite && huge.metersToNextLevel.isFinite, "XP stays finite")
+    precondition(!huge.xpLabel.isEmpty, "XP label does not trap")
+    let before = huge.distancePoints
+    huge.addDistance(.nan)
+    huge.addDistance(.infinity)
+    huge.addDistance(-5)
+    huge.savePendingDistance()
+    near(huge.distancePoints, before, "non-finite distance increments are ignored")
+
+    let resetURL = snapshotDirectory.appendingPathComponent("reset.json")
+    let resetDefaults = snapshotDefaults("reset")
+    let resetStats = CatStats(defaults: resetDefaults, snapshotURL: resetURL)
+    resetStats.addDistance(30)
+    resetStats.savePendingDistance()
+    resetStats.reset()
+    let resetAgain = CatStats(defaults: resetDefaults, snapshotURL: resetURL)
+    near(resetAgain.distancePoints, 0, "reset clears the atomic snapshot")
+
+    print("PASS: final distance saving, repeated-save idempotence, concurrent accumulation, restored XP, cross-process short-session persistence and crash-safe snapshots")
 }

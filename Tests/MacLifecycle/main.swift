@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 
 let suite = "PiaoPal.QA.RunDiagnostics.\(UUID().uuidString)"
@@ -84,4 +85,32 @@ let notStarted = make("never-started")
 defaults.set(["session": "somebody-else"], forKey: AppRunDiagnostics.activeRunKey)
 notStarted.finish()
 check(storedSession() == "somebody-else", "unstarted process cannot clear another process marker")
+
+let current = LaunchInstancePolicy.Peer(processID: 10, isTerminated: false)
+let exited = LaunchInstancePolicy.Peer(processID: 11, isTerminated: true)
+let other = LaunchInstancePolicy.Peer(processID: 12, isTerminated: false)
+check(!LaunchInstancePolicy.shouldExitAsDuplicate(bundleIdentifier: nil, currentProcessID: 10, peers: [other]),
+      "missing bundle id must not terminate this launch")
+check(!LaunchInstancePolicy.shouldExitAsDuplicate(bundleIdentifier: "", currentProcessID: 10, peers: [other]),
+      "empty bundle id must not match unrelated processes")
+check(!LaunchInstancePolicy.shouldExitAsDuplicate(bundleIdentifier: "io.github.sherwinng.PiaoPal", currentProcessID: 10, peers: [current, exited]),
+      "this process and a terminated peer are not a second instance")
+check(LaunchInstancePolicy.shouldExitAsDuplicate(bundleIdentifier: "io.github.sherwinng.PiaoPal", currentProcessID: 10, peers: [current, other]),
+      "a live second process is a duplicate")
+
+let retina = CGRect(x: 0, y: 0, width: 1440, height: 900)
+let secondary = CGRect(x: -1920, y: -120, width: 1920, height: 1080)
+check(DesktopFramePolicy.isSafeWindowFrame(retina, scale: 2), "retina laptop frame stays valid")
+check(DesktopFramePolicy.isSafeWindowFrame(secondary, scale: 1), "negative-origin display stays valid")
+check(DesktopFramePolicy.isSafeWindowFrame(retina.union(secondary), scale: 2), "ordinary dual-monitor union stays valid")
+check(!DesktopFramePolicy.isSafeWindowFrame(CGRect(x: 0, y: 0, width: CGFloat.nan, height: 900), scale: 2), "non-finite frame is rejected")
+check(!DesktopFramePolicy.isSafeWindowFrame(CGRect(x: 0, y: 0, width: 0, height: 900), scale: 2), "empty frame is rejected")
+check(!DesktopFramePolicy.isSafeWindowFrame(CGRect(x: 0, y: 0, width: 20_000, height: 1_000), scale: 2), "enormous frame is rejected")
+check(!DesktopFramePolicy.isSafeWindowFrame(CGRect(x: 1e12, y: 0, width: 800, height: 600), scale: 1), "absurd origin is rejected")
+let drawable = DesktopFramePolicy.safeDrawablePixelSize(pointWidth: 1440, pointHeight: 900, scale: 2, maximumPixels: 16_384)
+check(drawable == CGSize(width: 2880, height: 1800), "drawable pixels follow the window scale")
+check(DesktopFramePolicy.safeDrawablePixelSize(pointWidth: 10_000, pointHeight: 1_000, scale: 2, maximumPixels: 16_384) == nil,
+      "over-limit drawable is rejected")
+check(DesktopFramePolicy.safeDrawablePixelSize(pointWidth: 100, pointHeight: CGFloat.infinity, scale: 2, maximumPixels: 16_384) == nil,
+      "non-finite drawable is rejected")
 print("PASSED \(passed) lifecycle diagnostics assertions")
