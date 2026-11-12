@@ -1,4 +1,5 @@
 import Foundation
+import CoreGraphics
 import Security
 
 protocol APIKeyStoring: AnyObject {
@@ -21,7 +22,7 @@ struct KeychainStoreError: Error, Equatable {
     var status: OSStatus
 }
 
-struct KeychainAPIKeyStore: APIKeyStoring {
+final class KeychainAPIKeyStore: APIKeyStoring {
     var service = "io.github.sherwinng.PiaoPal.custom-pet"
 
     func save(_ key: String, account: String) throws {
