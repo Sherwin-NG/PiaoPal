@@ -14,7 +14,11 @@ final class OverlayWindow: NSWindow {
     }
 
     init() {
-        let frame = OverlayWindow.unionFrame()
+        let union = OverlayWindow.unionFrame()
+        let scale = NSScreen.screens.map(\.backingScaleFactor).max() ?? 2
+        let frame = DesktopFramePolicy.isSafeWindowFrame(union, scale: scale)
+            ? union
+            : NSRect(x: 0, y: 0, width: 64, height: 64)
         super.init(contentRect: frame, styleMask: [.borderless], backing: .buffered, defer: false)
         setFrame(frame, display: false)
         level                = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.overlayWindow)) + 1)
@@ -33,10 +37,24 @@ final class OverlayWindow: NSWindow {
         )
     }
 
+    private var frameUpdateScheduled = false
+
     @objc private func screensChanged() {
-        let frame = OverlayWindow.unionFrame()
-        guard !frame.isEmpty else { return }
-        setFrame(frame, display: false)
+        // setFrame inside didChangeScreenParameters is re-entrant and can throw
+        // an uncaught NSException. Apply the frame on the next main turn.
+        guard !frameUpdateScheduled else { return }
+        frameUpdateScheduled = true
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.frameUpdateScheduled = false
+            let frame = OverlayWindow.unionFrame()
+            let scale = NSScreen.screens.map(\.backingScaleFactor).max() ?? 2
+            guard DesktopFramePolicy.isSafeWindowFrame(frame, scale: scale) else {
+                Log.render.warning("Ignored a display union that AppKit or Metal cannot represent safely")
+                return
+            }
+            self.setFrame(frame, display: false)
+        }
     }
 
     override var canBecomeKey: Bool  { false }

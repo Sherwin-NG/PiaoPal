@@ -1,3 +1,4 @@
+import CoreGraphics
 import Foundation
 import os.log
 
@@ -92,5 +93,59 @@ final class AppRunDiagnostics {
 
     private func record(_ event: String) {
         log("\(event) pid=\(processID) version=\(version) session=\(sessionID)")
+    }
+}
+
+/// Decides whether this launch must exit because another live copy is already running.
+/// `NSRunningApplication.runningApplications(withBundleIdentifier:)` also returns this
+/// process and apps that have terminated but not yet left the list. Treating either as
+/// a duplicate calls `NSApp.terminate` and the only live copy disappears.
+struct LaunchInstancePolicy {
+    struct Peer {
+        var processID: Int32
+        var isTerminated: Bool
+    }
+
+    static func shouldExitAsDuplicate(
+        bundleIdentifier: String?,
+        currentProcessID: Int32,
+        peers: [Peer]
+    ) -> Bool {
+        guard let bundleIdentifier, !bundleIdentifier.isEmpty else { return false }
+        return peers.contains { $0.processID != currentProcessID && !$0.isTerminated }
+    }
+}
+
+/// AppKit raises an uncaught exception for non-finite, empty, or enormous window frames,
+/// and CAMetalLayer does the same for drawable sizes past the GPU limit. Both abort the
+/// process. Ordinary multi-monitor frames, including negative origins, stay unchanged.
+enum DesktopFramePolicy {
+    static let maximumPixels: CGFloat = 16_384
+    static let maximumOriginMagnitude: CGFloat = 1_000_000
+
+    static func isSafeWindowFrame(_ frame: CGRect, scale: CGFloat) -> Bool {
+        guard frame.origin.x.isFinite, frame.origin.y.isFinite,
+              frame.size.width.isFinite, frame.size.height.isFinite,
+              scale.isFinite, scale > 0, scale <= 8,
+              abs(frame.origin.x) <= maximumOriginMagnitude,
+              abs(frame.origin.y) <= maximumOriginMagnitude,
+              frame.width > 1, frame.height > 1,
+              frame.width <= maximumPixels, frame.height <= maximumPixels else { return false }
+        let pixelWidth = frame.width * scale
+        let pixelHeight = frame.height * scale
+        return pixelWidth.isFinite && pixelHeight.isFinite
+            && pixelWidth <= maximumPixels && pixelHeight <= maximumPixels
+    }
+
+    static func safeDrawablePixelSize(
+        pointWidth: CGFloat, pointHeight: CGFloat, scale: CGFloat, maximumPixels: Int
+    ) -> CGSize? {
+        guard pointWidth.isFinite, pointHeight.isFinite, scale.isFinite, scale > 0,
+              maximumPixels >= 64 else { return nil }
+        let width = pointWidth * scale
+        let height = pointHeight * scale
+        guard width.isFinite, height.isFinite, width >= 1, height >= 1,
+              width <= CGFloat(maximumPixels), height <= CGFloat(maximumPixels) else { return nil }
+        return CGSize(width: width, height: height)
     }
 }

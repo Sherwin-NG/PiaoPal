@@ -29,3 +29,24 @@ public readonly record struct DesktopRect(double X, double Y, double Width, doub
                    Math.Clamp(point.Y, Y + ry, Bottom - ry));
     }
 }
+
+/// <summary>
+/// Screen position of a layered window. Values that do not fit in a Win32 POINT
+/// used to be cast and then failed UpdateLayeredWindow, which terminated the pet.
+/// </summary>
+public static class LayeredFramePlacement
+{
+    public static bool TryOrigin(double left, double top, int width, int height, out int x, out int y)
+    {
+        x = 0;
+        y = 0;
+        if (width <= 0 || height <= 0 || width > 4096 || height > 4096) return false;
+        if (!IsWindowCoordinate(left) || !IsWindowCoordinate(top)) return false;
+        x = (int)Math.Round(left);
+        y = (int)Math.Round(top);
+        return true;
+    }
+
+    private static bool IsWindowCoordinate(double value)
+        => double.IsFinite(value) && value > int.MinValue && value < int.MaxValue;
+}

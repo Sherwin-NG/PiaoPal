@@ -74,8 +74,8 @@ final class MetalRenderer: ObservableObject {
     private let device: MTLDevice
     private let metalLayer: CAMetalLayer
     private let commandQueue: MTLCommandQueue
-    private var pipeline: MTLRenderPipelineState!
-    private var sampler: MTLSamplerState!
+    private var pipeline: MTLRenderPipelineState
+    private var sampler: MTLSamplerState
     // Triple-buffered per-instance buffer (single sprite).
     private var instanceBuffers: [MTLBuffer] = []
     private var bufferIndex = 0
@@ -104,6 +104,13 @@ final class MetalRenderer: ObservableObject {
     private var screenChangeObserver: NSObjectProtocol?
     private var screenSleepObserver: NSObjectProtocol?
     private var screenWakeObserver: NSObjectProtocol?
+    private var systemSleepObserver: NSObjectProtocol?
+    private var resignObserver: NSObjectProtocol?
+    private var powerOffObserver: NSObjectProtocol?
+    private var deviceRemovalObserver: NSObjectProtocol?
+    /// Latched after MTLDeviceWasRemoved. Further drawable use can abort the process.
+    private var deviceUnavailable = false
+    private var displaysAsleep = false
     private struct MotionFrame {
         var position: SIMD2<Float>
         var pose: PetAnimationPose
@@ -112,7 +119,7 @@ final class MetalRenderer: ObservableObject {
         var laserPosition: SIMD2<Float>?
     }
     let skinManager = SkinManager()
-    let catStats = CatStats()
+    let catStats: CatStats
 
     private let frameSemaphore = DispatchSemaphore(value: 3)
     private var fpsAccum: Double = 0
@@ -144,6 +151,7 @@ final class MetalRenderer: ObservableObject {
 
     init(preview: PetPreviewConfiguration? = nil) throws {
         self.preview = preview
+        catStats = CatStats(snapshotURL: preview == nil ? CatStats.applicationSupportSnapshotURL() : nil)
         guard let dev = MTLCreateSystemDefaultDevice() else {
             throw NSError(domain: "PiaoPal", code: 0,
                           userInfo: [NSLocalizedDescriptionKey: "No Metal device"])
@@ -174,10 +182,18 @@ final class MetalRenderer: ObservableObject {
         // Triple-buffered instance buffers — cat + laser dot.
         let stride = MemoryLayout<SpriteInstanceGPU>.stride
         for _ in 0..<3 {
-            instanceBuffers.append(dev.makeBuffer(length: stride, options: .storageModeShared)!)
-            laserInstanceBuffers.append(dev.makeBuffer(length: stride, options: .storageModeShared)!)
+            guard let instances = dev.makeBuffer(length: stride, options: .storageModeShared),
+                  let laser = dev.makeBuffer(length: stride, options: .storageModeShared) else {
+                throw NSError(domain: "PiaoPal", code: 4, userInfo: [
+                    NSLocalizedDescriptionKey: "Unable to allocate sprite buffers"
+                ])
+            }
+            instanceBuffers.append(instances)
+            laserInstanceBuffers.append(laser)
         }
 
+        pipeline = try Self.makePipeline(device: dev, pixelFormat: metalLayer.pixelFormat)
+        sampler = try Self.makeSampler(device: dev)
         skinManager.setDevice(dev)
 
         // Wire stat callbacks.
@@ -189,9 +205,8 @@ final class MetalRenderer: ObservableObject {
             }
         }
 
-        try buildPipeline()
-        buildSampler()
         laserTexture = makeLaserTexture()
+        observeDeviceRemoval()
 
         if let preview {
             // Preview selection is isolated from saved preferences and keeps
@@ -309,6 +324,31 @@ final class MetalRenderer: ObservableObject {
         removeDisplayObservers()
     }
 
+    private func observeDeviceRemoval() {
+        if let deviceRemovalObserver { NotificationCenter.default.removeObserver(deviceRemovalObserver) }
+        deviceRemovalObserver = NotificationCenter.default.addObserver(
+            forName: Notification.Name("MTLDeviceWasRemovedNotification"),
+            object: device, queue: .main
+        ) { [weak self] _ in
+            // The notification can arrive inside nextDrawable. Only latch here;
+            // tearing the display link down waits until this frame returns.
+            self?.deviceUnavailable = true
+            DispatchQueue.main.async { [weak self] in self?.noteMetalDeviceRemoved() }
+        }
+    }
+
+    private func noteMetalDeviceRemoved() {
+        deviceUnavailable = true
+        motionAccess.withMotion { _ in displayAvailable = false }
+        // stop() refuses later resume, so a removed device is not used again.
+        displayLink.stop()
+        Log.render.error("Metal device removed; rendering suspended so the process can stay alive")
+    }
+
+    private func persistStats() {
+        catStats.savePendingDistance()
+    }
+
     private func observeDisplays() {
         refreshDisplays()
         screenChangeObserver = NotificationCenter.default.addObserver(
@@ -319,25 +359,55 @@ final class MetalRenderer: ObservableObject {
             forName: NSWorkspace.screensDidSleepNotification, object: nil, queue: .main
         ) { [weak self] _ in
             guard let self else { return }
+            self.displaysAsleep = true
             self.motionAccess.withMotion { _ in self.displayAvailable = false }
+            self.displayLink.suspendForDisplayChange()
+            self.persistStats()
             Log.render.info("Display sleeping; rendering suspended")
         }
         screenWakeObserver = workspace.addObserver(
             forName: NSWorkspace.screensDidWakeNotification, object: nil, queue: .main
-        ) { [weak self] _ in self?.refreshDisplays() }
+        ) { [weak self] _ in
+            guard let self, !self.deviceUnavailable else { return }
+            self.displaysAsleep = false
+            self.refreshDisplays()
+            self.displayLink.resumeAfterDisplayChange()
+        }
+        systemSleepObserver = workspace.addObserver(
+            forName: NSWorkspace.willSleepNotification, object: nil, queue: .main
+        ) { [weak self] _ in self?.persistStats() }
+        powerOffObserver = workspace.addObserver(
+            forName: NSWorkspace.willPowerOffNotification, object: nil, queue: .main
+        ) { [weak self] _ in self?.persistStats() }
+        resignObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.willResignActiveNotification, object: nil, queue: .main
+        ) { [weak self] _ in self?.persistStats() }
     }
 
     private func removeDisplayObservers() {
         if let screenChangeObserver { NotificationCenter.default.removeObserver(screenChangeObserver) }
-        if let screenSleepObserver { NSWorkspace.shared.notificationCenter.removeObserver(screenSleepObserver) }
-        if let screenWakeObserver { NSWorkspace.shared.notificationCenter.removeObserver(screenWakeObserver) }
+        let workspace = NSWorkspace.shared.notificationCenter
+        if let screenSleepObserver { workspace.removeObserver(screenSleepObserver) }
+        if let screenWakeObserver { workspace.removeObserver(screenWakeObserver) }
+        if let systemSleepObserver { workspace.removeObserver(systemSleepObserver) }
+        if let powerOffObserver { workspace.removeObserver(powerOffObserver) }
+        if let resignObserver { NotificationCenter.default.removeObserver(resignObserver) }
+        if let deviceRemovalObserver { NotificationCenter.default.removeObserver(deviceRemovalObserver) }
         screenChangeObserver = nil
         screenSleepObserver = nil
         screenWakeObserver = nil
+        systemSleepObserver = nil
+        powerOffObserver = nil
+        resignObserver = nil
+        deviceRemovalObserver = nil
     }
 
     private func refreshDisplays() {
-        precondition(Thread.isMainThread)
+        if !Thread.isMainThread {
+            DispatchQueue.main.async { [weak self] in self?.refreshDisplays() }
+            return
+        }
+        guard !deviceUnavailable else { return }
         guard motionAccess.withMotion({ _ in !isStopped }) else { return }
         let screens = NSScreen.screens.filter { screen in
             let frame = screen.frame
@@ -354,12 +424,20 @@ final class MetalRenderer: ObservableObject {
         let union = frames.reduce(NSRect.null) { $0.union($1) }
         let primary = screens.first(where: { $0 == NSScreen.main }) ?? first
         let scale = primary.backingScaleFactor
-        guard scale.isFinite, scale > 0, union.width.isFinite, union.height.isFinite else { return }
+        guard DesktopFramePolicy.isSafeWindowFrame(union, scale: scale),
+              let drawable = DesktopFramePolicy.safeDrawablePixelSize(
+                pointWidth: union.width, pointHeight: union.height, scale: scale,
+                maximumPixels: Int(DesktopFramePolicy.maximumPixels)
+              ) else {
+            motionAccess.withMotion { _ in displayAvailable = false }
+            Log.render.warning("Display union is not a safe window or drawable; rendering paused")
+            return
+        }
         let snapshot = DisplaySnapshot(union: union, visible: primary.visibleFrame, screens: frames)
         let mouse = NSEvent.mouseLocation
         let menuBarHeight = NSStatusBar.system.thickness
         metalLayer.contentsScale = scale
-        metalLayer.drawableSize = CGSize(width: union.width * scale, height: union.height * scale)
+        metalLayer.drawableSize = drawable
 
         motionAccess.withMotion { companion in
             if let previous = displaySnapshot,
@@ -425,6 +503,12 @@ final class MetalRenderer: ObservableObject {
     }
 
     private func startLoop() {
+        displayLink.onDisplaysChanged = { [weak self] in
+            guard let self, !self.deviceUnavailable, !self.displaysAsleep else { return }
+            self.refreshDisplays()
+            self.displayLink.resumeAfterDisplayChange()
+        }
+        // The display-link callback hops to main before invoking this closure.
         displayLink.start { [weak self] dt in self?.tick(dt: dt) }
         if preview?.cyclesAnimations != true { startClickMonitor() }
     }
@@ -505,6 +589,11 @@ final class MetalRenderer: ObservableObject {
     // MARK: – Render
 
     private func render(dt: Double, frame: MotionFrame, union: NSRect) {
+        guard !deviceUnavailable else { return }
+        guard frame.position.x.isFinite, frame.position.y.isFinite,
+              frame.pose.uvRect.x.isFinite, frame.pose.uvRect.y.isFinite,
+              frame.pose.scale.x.isFinite, frame.pose.scale.y.isFinite,
+              frame.scale.isFinite else { return }
         guard frameSemaphore.wait(timeout: .now()) == .success else { return }
 
         guard let drawable = metalLayer.nextDrawable() else { frameSemaphore.signal(); return }
@@ -581,7 +670,7 @@ final class MetalRenderer: ObservableObject {
 
     // MARK: – Pipeline
 
-    private func buildPipeline() throws {
+    private static func makePipeline(device: MTLDevice, pixelFormat: MTLPixelFormat) throws -> MTLRenderPipelineState {
         let library: MTLLibrary
         if let lib = try? device.makeDefaultLibrary(bundle: .main),
            lib.functionNames.contains("sprite_vertex") {
@@ -598,21 +687,26 @@ final class MetalRenderer: ObservableObject {
         let desc = MTLRenderPipelineDescriptor()
         desc.vertexFunction   = vert
         desc.fragmentFunction = frag
-        desc.colorAttachments[0].pixelFormat = metalLayer.pixelFormat
+        desc.colorAttachments[0].pixelFormat = pixelFormat
         desc.colorAttachments[0].isBlendingEnabled = true
         // Both ImageIO sprites and the laser texture contain premultiplied RGB.
         desc.colorAttachments[0].sourceRGBBlendFactor        = .one
         desc.colorAttachments[0].destinationRGBBlendFactor   = .oneMinusSourceAlpha
         desc.colorAttachments[0].sourceAlphaBlendFactor      = .one
         desc.colorAttachments[0].destinationAlphaBlendFactor = .oneMinusSourceAlpha
-        pipeline = try device.makeRenderPipelineState(descriptor: desc)
+        return try device.makeRenderPipelineState(descriptor: desc)
     }
 
-    private func buildSampler() {
+    private static func makeSampler(device: MTLDevice) throws -> MTLSamplerState {
         let d = MTLSamplerDescriptor()
         d.minFilter = .nearest
         d.magFilter = .nearest
-        sampler = device.makeSamplerState(descriptor: d)!
+        guard let sampler = device.makeSamplerState(descriptor: d) else {
+            throw NSError(domain: "PiaoPal", code: 5, userInfo: [
+                NSLocalizedDescriptionKey: "Unable to create a sprite sampler"
+            ])
+        }
+        return sampler
     }
 
     private func accumStats(dt: Double, gpuMs: Double) {

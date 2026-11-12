@@ -264,6 +264,35 @@ try
     disposed.AddDistance(42); disposed.Dispose(); disposed.Dispose();
     using (var reread = new SettingsStore(Path.Combine(temp, "dispose"), fixedDay))
         Near(reread.Stats.DistancePoints, 42, 0, "Dispose is idempotent");
+
+    var killed = Path.Combine(temp, "killed");
+    var living = new SettingsStore(killed, fixedDay);
+    living.AddDistance(77);
+    living.Save();
+    using (var reader = new SettingsStore(killed, fixedDay))
+        Near(reader.Stats.DistancePoints, 77, 0, "periodic Save is readable without process exit");
+    living.Dispose();
 }
 finally { Directory.Delete(temp, recursive: true); }
+
+Check(LayeredFramePlacement.TryOrigin(68, 80, 64, 64, out var originX, out var originY) && originX == 68 && originY == 80,
+    "finite layered origin is preserved");
+Check(LayeredFramePlacement.TryOrigin(-1005, -400, 10, 10, out var negativeX, out var negativeY) && negativeX == -1005 && negativeY == -400,
+    "negative monitor origin is preserved");
+Check(!LayeredFramePlacement.TryOrigin(double.NaN, 0, 64, 64, out _, out _), "NaN layered origin is rejected");
+Check(!LayeredFramePlacement.TryOrigin(1e20, 0, 64, 64, out _, out _), "overflowing layered origin is rejected");
+Check(!LayeredFramePlacement.TryOrigin(0, 0, 0, 64, out _, out _), "empty layered frame is rejected");
+var sleep = CompanionLifetime.React(CompanionLifetimeEvent.Suspend);
+Check(sleep.SaveStats && sleep.SuspendRendering && !sleep.ResumeRendering, "sleep saves and pauses rendering");
+var wake = CompanionLifetime.React(CompanionLifetimeEvent.Resume);
+Check(wake.ResumeRendering && !wake.SaveStats && !wake.SuspendRendering, "wake resumes rendering");
+var locked = CompanionLifetime.React(CompanionLifetimeEvent.Lock);
+Check(locked.SaveStats && locked.SuspendRendering && !locked.ResumeRendering, "session lock saves and pauses");
+var unlock = CompanionLifetime.React(CompanionLifetimeEvent.Unlock);
+Check(unlock.ResumeRendering && !unlock.SaveStats && !unlock.SuspendRendering, "session unlock resumes");
+var logoff = CompanionLifetime.React(CompanionLifetimeEvent.Logoff);
+Check(logoff.SaveStats && logoff.SuspendRendering, "logoff saves before the session ends");
+var other = CompanionLifetime.React(CompanionLifetimeEvent.Other);
+Check(!other.SaveStats && !other.SuspendRendering && !other.ResumeRendering, "unrelated power events do not churn state");
+
 Console.WriteLine($"PASS: {checks} core checks — six pets, invalid-input recovery, real monitor bounds, DPI, animation frames, atomic settings, backup recovery, session stats and exit flush");
