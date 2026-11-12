@@ -146,7 +146,7 @@ enum InkMeasurement {
     }
 }
 
-enum PhotoPrepIssue: Equatable {
+enum PhotoPrepIssue: Error, Equatable {
     case tooFew(selected: Int, minimum: Int)
     case tooMany(selected: Int, maximum: Int)
     case unreadable(String)
