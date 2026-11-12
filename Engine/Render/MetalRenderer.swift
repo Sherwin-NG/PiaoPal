@@ -395,6 +395,21 @@ final class MetalRenderer: ObservableObject {
         }
     }
 
+    @discardableResult
+    func adoptCustomPet(id: String) -> Bool {
+        guard skinManager.loadSkinImmediately(id: id) else { return false }
+        refreshAvailableSkins()
+        setSkin(id)
+        return true
+    }
+
+    func forgetCustomPet(id: String) {
+        guard !SkinManager.skinIDs.contains(id) else { return }
+        if currentSkinID == id { setSkin(SkinManager.defaultSkinID) }
+        skinManager.unloadSkin(id: id)
+        refreshAvailableSkins()
+    }
+
     var availableSkins: [String] { skinManager.availableIDs }
 
     func refreshAvailableSkins() {
@@ -473,6 +488,9 @@ final class MetalRenderer: ObservableObject {
             || preview?.atlasURL.deletingPathExtension().lastPathComponent == "piaopiao" {
             return .piaopiao
         }
+        // A generated pet with a four-frame walk sheet uses the same gait timing as PiaoPiao.
+        // GIF customs and the other bundled pets have no walk sheet and stay on the legacy timeline.
+        if skinManager.walkingTexture(id: skinID) != nil { return .piaopiao }
         return .legacy
     }
 

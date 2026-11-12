@@ -5,9 +5,11 @@ import AppKit
 
 final class SkinManager {
     private var textures: [String: MTLTexture] = [:]
+    private var walkingTextures: [String: MTLTexture] = [:]
     private let lock = NSLock()
     private var device: MTLDevice?
-    private var piaopiaoWalkingTexture: MTLTexture?
+    /// Tests point this at a temporary directory. The app leaves it nil.
+    static var customSpritesDirectoryOverride: URL?
 
     static let defaultSkinID = "piaopiao"
     static let skinIDs = [defaultSkinID, "classic", "dog", "tora", "maia", "vaporwave"]
@@ -16,8 +18,32 @@ final class SkinManager {
     // MARK: – Custom sprites directory (Application Support)
 
     static var customSpritesDir: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        if let customSpritesDirectoryOverride { return customSpritesDirectoryOverride }
+        return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
             .appendingPathComponent("PiaoPal/Sprites")
+    }
+
+    /// One sprite sheet per id. A generated PNG atlas wins over an older GIF.
+    /// Walk sheets (`*-walk.png`) are not selectable pets.
+    static func customSpriteURLs(in directory: URL) -> [URL] {
+        guard let urls = try? FileManager.default.contentsOfDirectory(
+            at: directory, includingPropertiesForKeys: nil
+        ) else { return [] }
+        var byID: [String: URL] = [:]
+        for url in urls {
+            let ext = url.pathExtension.lowercased()
+            guard ext == "gif" || ext == "png" else { continue }
+            let base = url.deletingPathExtension().lastPathComponent
+            if base.hasSuffix("-walk") { continue }
+            if let existing = byID[base] {
+                if ext == "png" && existing.pathExtension.lowercased() != "png" {
+                    byID[base] = url
+                }
+            } else {
+                byID[base] = url
+            }
+        }
+        return byID.values.sorted { $0.lastPathComponent < $1.lastPathComponent }
     }
 
     /// Returns the URL for a skin's GIF — custom (App Support) takes priority over bundle.
@@ -28,9 +54,20 @@ final class SkinManager {
         if id == defaultSkinID {
             return Bundle.main.url(forResource: "piaopiao", withExtension: "png", subdirectory: "Sprites")
         }
+        let png = customSpritesDir.appendingPathComponent("\(id).png")
+        if FileManager.default.fileExists(atPath: png.path) { return png }
         let custom = customSpritesDir.appendingPathComponent("\(id).gif")
         if FileManager.default.fileExists(atPath: custom.path) { return custom }
         return Bundle.main.url(forResource: id, withExtension: "gif", subdirectory: "Sprites")
+    }
+
+    static func walkAtlasURL(for id: String) -> URL? {
+        if id == defaultSkinID {
+            return Bundle.main.url(forResource: "piaopiao-walk", withExtension: "png", subdirectory: "Sprites")
+        }
+        let custom = customSpritesDir.appendingPathComponent("\(id)-walk.png")
+        if FileManager.default.fileExists(atPath: custom.path) { return custom }
+        return nil
     }
 
     var availableIDs: [String] {
@@ -48,9 +85,17 @@ final class SkinManager {
 
     /// Optional four-phase gait sheet. It is not another selectable companion.
     func walkingTexture(id: String) -> MTLTexture? {
-        guard id == Self.defaultSkinID || id == "ai-preview" else { return nil }
         lock.lock(); defer { lock.unlock() }
-        return piaopiaoWalkingTexture
+        return walkingTextures[id]
+    }
+
+    /// Drops a generated pet from the GPU cache. Bundled skins stay loaded.
+    func unloadSkin(id: String) {
+        guard !Self.skinIDs.contains(id), id != "ai-preview" else { return }
+        lock.lock()
+        textures[id] = nil
+        walkingTextures[id] = nil
+        lock.unlock()
     }
 
     /// Explicit developer preview: decode synchronously so failures are visible at launch.
@@ -75,7 +120,10 @@ final class SkinManager {
         lock.unlock()
         Self.previewAtlasURL = url
         if url.deletingPathExtension().lastPathComponent == "piaopiao" {
-            loadWalkingTexture(from: url.deletingLastPathComponent().appendingPathComponent("piaopiao-walk.png"))
+            loadWalkingTexture(
+                from: url.deletingLastPathComponent().appendingPathComponent("piaopiao-walk.png"),
+                id: "ai-preview"
+            )
         }
         return id
     }
@@ -87,8 +135,8 @@ final class SkinManager {
                 NSLocalizedDescriptionKey: "PiaoPiao's bundled sprite atlas could not be loaded."
             ])
         }
-        if let url = Bundle.main.url(forResource: "piaopiao-walk", withExtension: "png", subdirectory: "Sprites") {
-            loadWalkingTexture(from: url)
+        if let url = Self.walkAtlasURL(for: Self.defaultSkinID) {
+            loadWalkingTexture(from: url, id: Self.defaultSkinID)
         }
     }
 
@@ -100,6 +148,7 @@ final class SkinManager {
         lock.lock()
         textures[id] = texture
         lock.unlock()
+        loadWalkingTextureIfPresent(id: id)
         return true
     }
 
@@ -117,17 +166,13 @@ final class SkinManager {
         group.notify(queue: .main, execute: completion)
     }
 
-    /// Load any .gif files found in the custom sprites directory.
+    /// Load generated PNG atlases and older custom GIFs. Walk sheets are not pets.
     func loadCustomSprites(completion: @escaping () -> Void = {}) {
         let dir = SkinManager.customSpritesDir
-        guard let urls = try? FileManager.default.contentsOfDirectory(at: dir,
-                                                                       includingPropertiesForKeys: nil)
-        else { DispatchQueue.main.async(execute: completion); return }
-        let gifURLs = urls.filter {
-            $0.pathExtension.lowercased() == "gif"
-        }
+        let spriteURLs = Self.customSpriteURLs(in: dir)
+        if spriteURLs.isEmpty { DispatchQueue.main.async(execute: completion); return }
         let group = DispatchGroup()
-        for url in gifURLs {
+        for url in spriteURLs {
             let id = url.deletingPathExtension().lastPathComponent
             guard !SkinManager.skinIDs.contains(id) else { continue }
             group.enter()
@@ -171,6 +216,7 @@ final class SkinManager {
             self.lock.lock()
             self.textures[id] = tex
             self.lock.unlock()
+            self.loadWalkingTextureIfPresent(id: id)
             Log.skin.info("Skin loaded: \(id)")
             completion(true)
         }
@@ -178,11 +224,16 @@ final class SkinManager {
 
     // MARK: – Private
 
-    private func loadWalkingTexture(from url: URL) {
+    private func loadWalkingTextureIfPresent(id: String) {
+        guard let url = Self.walkAtlasURL(for: id) else { return }
+        loadWalkingTexture(from: url, id: id)
+    }
+
+    private func loadWalkingTexture(from url: URL, id: String) {
         guard let dev = device, let texture = gifToTexture(url: url, device: dev),
               texture.width == 256, texture.height == 512 else { return }
         lock.lock(); defer { lock.unlock() }
-        piaopiaoWalkingTexture = texture
+        walkingTextures[id] = texture
     }
 
     private func gifToTexture(url: URL, device: MTLDevice) -> MTLTexture? {

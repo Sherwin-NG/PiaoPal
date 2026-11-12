@@ -25,9 +25,9 @@ final class MarketplaceWindowController {
     private let window = MarketplaceWindow()
     private let store: MarketplaceStore
 
-    init(renderer: MetalRenderer, langManager: LanguageManager) {
+    init(renderer: MetalRenderer, langManager: LanguageManager, onCreateCustomPet: @escaping () -> Void = {}) {
         store = MarketplaceStore(renderer: renderer)
-        let view = MarketplaceView(store: store)
+        let view = MarketplaceView(store: store, onCreateCustomPet: onCreateCustomPet)
             .environmentObject(langManager)
         window.contentView = NSHostingView(rootView: view)
     }

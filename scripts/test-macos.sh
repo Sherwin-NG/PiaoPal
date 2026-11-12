@@ -35,4 +35,10 @@ xcrun swiftc "${COMMON_FLAGS[@]}" -parse-as-library \
 "$TEST_DIR/updater-tests"
 
 
-echo "PASS: PiaoPal macOS localization, sprites, motion, statistics, lifecycle, and updater checks."
+xcrun swiftc "${COMMON_FLAGS[@]}" Engine/Simulation/PetMotion.swift Skins/SkinManager.swift Utils/Logging.swift \
+  Skins/CustomPet/CustomPetImages.swift Skins/CustomPet/CustomPetAtlas.swift \
+  Skins/CustomPet/CustomPetStore.swift Skins/CustomPet/CustomPetGenerator.swift \
+  Tests/MacCustomPet/main.swift -o "$TEST_DIR/custom-pet-tests"
+"$TEST_DIR/custom-pet-tests"
+
+echo "PASS: PiaoPal macOS localization, sprites, motion, statistics, lifecycle, updater, and custom pet checks."

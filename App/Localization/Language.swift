@@ -1180,5 +1180,229 @@ enum Strings {
             .simplifiedChinese: "请稍后重试。",
             .traditionalChinese: "請稍後再試。",
         ],
+        "settings.custom_pet": [
+            .simplifiedChinese: "用照片生成", .traditionalChinese: "用照片生成", .english: "From photos",
+            .french: "Depuis des photos", .japanese: "写真から作る", .german: "Aus Fotos", .spanish: "Desde fotos",
+        ],
+        "marketplace.custom_pet": [
+            .simplifiedChinese: "用照片生成我的宠物", .traditionalChinese: "用照片生成我的寵物", .english: "Create a pet from photos",
+            .french: "Créer un pet à partir de photos", .japanese: "写真からペットを作る", .german: "Pet aus Fotos erzeugen", .spanish: "Crear una mascota con fotos",
+        ],
+        "custompet.title": [
+            .simplifiedChinese: "我的宠物", .traditionalChinese: "我的寵物", .english: "Your pet",
+            .french: "Votre pet", .japanese: "マイペット", .german: "Dein Pet", .spanish: "Tu mascota",
+        ],
+        "custompet.subtitle": [
+            .simplifiedChinese: "用 3–5 张照片生成一只桌宠", .traditionalChinese: "用 3–5 張照片生成一隻桌寵", .english: "Turn 3–5 photos into a desktop pet",
+            .french: "3 à 5 photos deviennent un pet", .japanese: "写真 3–5 枚からデスクトップペットを作ります", .german: "Aus 3–5 Fotos ein Desktop-Pet machen", .spanish: "Convierte 3–5 fotos en una mascota",
+        ],
+        "custompet.your_pets": [
+            .simplifiedChinese: "已保存", .traditionalChinese: "已儲存", .english: "Saved pets",
+            .french: "Pets enregistrés", .japanese: "保存済み", .german: "Gespeicherte Pets", .spanish: "Mascotas guardadas",
+        ],
+        "custompet.empty": [
+            .simplifiedChinese: "还没有自定义宠物。", .traditionalChinese: "還沒有自訂寵物。", .english: "No custom pets yet.",
+            .french: "Pas encore de pet personnalisé.", .japanese: "まだカスタムペットはありません。", .german: "Noch keine eigenen Pets.", .spanish: "Aún no hay mascotas propias.",
+        ],
+        "custompet.choose_photos": [
+            .simplifiedChinese: "选择照片", .traditionalChinese: "選擇照片", .english: "Choose photos",
+            .french: "Choisir des photos", .japanese: "写真を選ぶ", .german: "Fotos wählen", .spanish: "Elegir fotos",
+        ],
+        "custompet.photo_hint": [
+            .simplifiedChinese: "请选同一只宠物的 3–5 张清晰照片，尽量包含正面、侧面和全身。", .traditionalChinese: "請選同一隻寵物的 3–5 張清晰照片，盡量包含正面、側面和全身。", .english: "Use 3–5 clear photos of the same pet: front, side, and full body.",
+            .french: "3 à 5 photos nettes du même animal : face, profil et corps entier.", .japanese: "同じペットの正面、横、全身が分かる鮮明な写真を 3–5 枚。", .german: "3–5 scharfe Fotos desselben Tiers: vorne, seitlich und ganzkörperlich.", .spanish: "3–5 fotos nítidas de la misma mascota: frente, perfil y cuerpo entero.",
+        ],
+        "custompet.quadruped_note": [
+            .simplifiedChinese: "动作和现有桌宠一样：八方向走路、坐下、挠痒和睡觉，最适合猫狗这类四足动物。", .traditionalChinese: "動作和現有桌寵一樣：八方向走路、坐下、撓癢和睡覺，最適合貓狗這類四足動物。", .english: "Poses match the current pets: walk in 8 directions, sit, scratch, and sleep. Cats and dogs fit best.",
+            .french: "Les poses suivent les pets actuels : marche à 8 directions, assis, grattage et sommeil. Chats et chiens conviennent le mieux.", .japanese: "動きは今のペットと同じです。8 方向の歩行、座り、掻く、眠る。猫と犬に向いています。", .german: "Die Posen entsprechen den vorhandenen Pets: 8 Laufrichtungen, sitzen, kratzen, schlafen. Katzen und Hunde passen am besten.", .spanish: "Las poses son las de las mascotas actuales: caminar en 8 direcciones, sentarse, rascarse y dormir. Encajan mejor gatos y perros.",
+        ],
+        "custompet.name": [
+            .simplifiedChinese: "名字", .traditionalChinese: "名字", .english: "Name",
+            .french: "Nom", .japanese: "名前", .german: "Name", .spanish: "Nombre",
+        ],
+        "custompet.generate": [
+            .simplifiedChinese: "生成", .traditionalChinese: "生成", .english: "Generate",
+            .french: "Générer", .japanese: "生成", .german: "Erzeugen", .spanish: "Generar",
+        ],
+        "custompet.retry_failed": [
+            .simplifiedChinese: "重试失败的帧", .traditionalChinese: "重試失敗的幀", .english: "Retry failed frames",
+            .french: "Réessayer les images échouées", .japanese: "失敗したフレームを再試行", .german: "Fehlgeschlagene Frames erneut", .spanish: "Reintentar fotogramas fallidos",
+        ],
+        "custompet.start_over": [
+            .simplifiedChinese: "全部重来", .traditionalChinese: "全部重來", .english: "Start over",
+            .french: "Tout recommencer", .japanese: "最初から", .german: "Neu beginnen", .spanish: "Empezar de nuevo",
+        ],
+        "custompet.save": [
+            .simplifiedChinese: "保存并使用", .traditionalChinese: "儲存並使用", .english: "Save and use",
+            .french: "Enregistrer et utiliser", .japanese: "保存して使う", .german: "Sichern und verwenden", .spanish: "Guardar y usar",
+        ],
+        "custompet.delete": [
+            .simplifiedChinese: "删除", .traditionalChinese: "刪除", .english: "Delete",
+            .french: "Supprimer", .japanese: "削除", .german: "Löschen", .spanish: "Eliminar",
+        ],
+        "custompet.use": [
+            .simplifiedChinese: "使用", .traditionalChinese: "使用", .english: "Use",
+            .french: "Utiliser", .japanese: "使う", .german: "Nutzen", .spanish: "Usar",
+        ],
+        "custompet.cancel": [
+            .simplifiedChinese: "取消", .traditionalChinese: "取消", .english: "Cancel",
+            .french: "Annuler", .japanese: "キャンセル", .german: "Abbrechen", .spanish: "Cancelar",
+        ],
+        "custompet.back": [
+            .simplifiedChinese: "返回", .traditionalChinese: "返回", .english: "Back",
+            .french: "Retour", .japanese: "戻る", .german: "Zurück", .spanish: "Volver",
+        ],
+        "custompet.api_key": [
+            .simplifiedChinese: "API 密钥", .traditionalChinese: "API 金鑰", .english: "API key",
+            .french: "Clé API", .japanese: "API キー", .german: "API-Schlüssel", .spanish: "Clave API",
+        ],
+        "custompet.api_key_placeholder": [
+            .simplifiedChinese: "sk-…", .traditionalChinese: "sk-…", .english: "sk-…",
+            .french: "sk-…", .japanese: "sk-…", .german: "sk-…", .spanish: "sk-…",
+        ],
+        "custompet.api_key_save": [
+            .simplifiedChinese: "保存到钥匙串", .traditionalChinese: "儲存到鑰匙圈", .english: "Save key in Keychain",
+            .french: "Enregistrer dans le Trousseau", .japanese: "キーチェーンに保存", .german: "Im Schlüsselbund sichern", .spanish: "Guardar en el Llavero",
+        ],
+        "custompet.api_key_saved": [
+            .simplifiedChinese: "钥匙串里已有密钥。", .traditionalChinese: "鑰匙圈裡已有金鑰。", .english: "A key is saved in Keychain.",
+            .french: "Une clé est dans le Trousseau.", .japanese: "キーチェーンにキーがあります。", .german: "Ein Schlüssel liegt im Schlüsselbund.", .spanish: "Hay una clave en el Llavero.",
+        ],
+        "custompet.api_key_missing": [
+            .simplifiedChinese: "生成前请先保存 API 密钥。", .traditionalChinese: "生成前請先儲存 API 金鑰。", .english: "Add an API key before generating.",
+            .french: "Ajoutez une clé API avant de générer.", .japanese: "生成する前に API キーを保存してください。", .german: "Vor dem Erzeugen einen API-Schlüssel sichern.", .spanish: "Añade una clave API antes de generar.",
+        ],
+        "custompet.api_key_clear": [
+            .simplifiedChinese: "移除密钥", .traditionalChinese: "移除金鑰", .english: "Remove key",
+            .french: "Retirer la clé", .japanese: "キーを削除", .german: "Schlüssel entfernen", .spanish: "Quitar clave",
+        ],
+        "custompet.api_key_error": [
+            .simplifiedChinese: "无法写入钥匙串。", .traditionalChinese: "無法寫入鑰匙圈。", .english: "Could not update Keychain.",
+            .french: "Impossible de modifier le Trousseau.", .japanese: "キーチェーンを更新できません。", .german: "Schlüsselbund konnte nicht aktualisiert werden.", .spanish: "No se pudo actualizar el Llavero.",
+        ],
+        "custompet.model": [
+            .simplifiedChinese: "模型", .traditionalChinese: "模型", .english: "Model",
+            .french: "Modèle", .japanese: "モデル", .german: "Modell", .spanish: "Modelo",
+        ],
+        "custompet.base_url": [
+            .simplifiedChinese: "接口地址", .traditionalChinese: "介面位址", .english: "API base URL",
+            .french: "URL de base de l'API", .japanese: "API のベース URL", .german: "API-Basis-URL", .spanish: "URL base de la API",
+        ],
+        "custompet.quality": [
+            .simplifiedChinese: "画质", .traditionalChinese: "畫質", .english: "Quality",
+            .french: "Qualité", .japanese: "品質", .german: "Qualität", .spanish: "Calidad",
+        ],
+        "custompet.quality.low": [
+            .simplifiedChinese: "低", .traditionalChinese: "低", .english: "Low",
+            .french: "Basse", .japanese: "低", .german: "Niedrig", .spanish: "Baja",
+        ],
+        "custompet.quality.medium": [
+            .simplifiedChinese: "中", .traditionalChinese: "中", .english: "Medium",
+            .french: "Moyenne", .japanese: "中", .german: "Mittel", .spanish: "Media",
+        ],
+        "custompet.quality.high": [
+            .simplifiedChinese: "高", .traditionalChinese: "高", .english: "High",
+            .french: "Haute", .japanese: "高", .german: "Hoch", .spanish: "Alta",
+        ],
+        "custompet.include_walk": [
+            .simplifiedChinese: "四帧步态（更顺，请求更多）", .traditionalChinese: "四幀步態（更順，請求更多）", .english: "Four-frame walk (smoother, more requests)",
+            .french: "Marche en quatre images (plus fluide, plus de requêtes)", .japanese: "4 フレーム歩行（滑らか、リクエスト増）", .german: "Vier-Frame-Gang (flüssiger, mehr Anfragen)", .spanish: "Paso de cuatro fotogramas (más fluido, más solicitudes)",
+        ],
+        "custompet.cost_estimate": [
+            .simplifiedChinese: "约 $%.2f（%d 次图像请求）。实际费用以服务商标价为准。", .traditionalChinese: "約 $%.2f（%d 次圖像請求）。實際費用以服務商標價為準。", .english: "About $%.2f for %d images. Provider pricing applies.",
+            .french: "Environ $%.2f pour %d images. Le tarif du fournisseur s'applique.", .japanese: "約 $%.2f（画像 %d 回）。料金は提供者の価格に従います。", .german: "Etwa $%.2f für %d Bilder. Es gilt der Preis des Anbieters.", .spanish: "Unos $%.2f por %d imágenes. Se aplica el precio del proveedor.",
+        ],
+        "custompet.privacy": [
+            .simplifiedChinese: "照片只发给这把密钥对应的服务商，飘伴不会保存照片。", .traditionalChinese: "照片只發給這把金鑰對應的服務商，飄伴不會保存照片。", .english: "Photos go only to the provider for this key. PiaoPal does not save them.",
+            .french: "Les photos vont seulement au fournisseur de cette clé. PiaoPal ne les enregistre pas.", .japanese: "写真はこのキーの提供者にだけ送られます。PiaoPal は写真を保存しません。", .german: "Fotos gehen nur an den Anbieter dieses Schlüssels. PiaoPal speichert sie nicht.", .spanish: "Las fotos solo van al proveedor de esta clave. PiaoPal no las guarda.",
+        ],
+        "custompet.preview": [
+            .simplifiedChinese: "预览", .traditionalChinese: "預覽", .english: "Preview",
+            .french: "Aperçu", .japanese: "プレビュー", .german: "Vorschau", .spanish: "Vista previa",
+        ],
+        "custompet.delete_confirm": [
+            .simplifiedChinese: "删除这只宠物？", .traditionalChinese: "刪除這隻寵物？", .english: "Delete this pet?",
+            .french: "Supprimer ce pet ?", .japanese: "このペットを削除しますか？", .german: "Dieses Pet löschen?", .spanish: "¿Eliminar esta mascota?",
+        ],
+        "custompet.default_name": [
+            .simplifiedChinese: "我的宠物", .traditionalChinese: "我的寵物", .english: "My pet",
+            .french: "Mon pet", .japanese: "マイペット", .german: "Mein Pet", .spanish: "Mi mascota",
+        ],
+        "custompet.progress.reference": [
+            .simplifiedChinese: "正在画角色参考", .traditionalChinese: "正在畫角色參考", .english: "Drawing the character reference",
+            .french: "Dessin de la référence", .japanese: "キャラクター参考を描いています", .german: "Charakterreferenz wird gezeichnet", .spanish: "Dibujando la referencia",
+        ],
+        "custompet.progress.frame": [
+            .simplifiedChinese: "第 %d 帧，共 %d 帧", .traditionalChinese: "第 %d 幀，共 %d 幀", .english: "Frame %d of %d",
+            .french: "Image %d sur %d", .japanese: "%d / %d フレーム", .german: "Frame %d von %d", .spanish: "Fotograma %d de %d",
+        ],
+        "custompet.issue.too_few": [
+            .simplifiedChinese: "至少选择 %d 张照片（当前 %d 张）。", .traditionalChinese: "至少選擇 %d 張照片（目前 %d 張）。", .english: "Choose at least %d photos (%d selected).",
+            .french: "Choisissez au moins %d photos (%d sélectionnées).", .japanese: "写真は少なくとも %d 枚必要です（現在 %d 枚）。", .german: "Mindestens %d Fotos wählen (%d ausgewählt).", .spanish: "Elige al menos %d fotos (%d seleccionadas).",
+        ],
+        "custompet.issue.too_many": [
+            .simplifiedChinese: "最多选择 %d 张照片（当前 %d 张）。", .traditionalChinese: "最多選擇 %d 張照片（目前 %d 張）。", .english: "Choose at most %d photos (%d selected).",
+            .french: "Choisissez au plus %d photos (%d sélectionnées).", .japanese: "写真は最大 %d 枚です（現在 %d 枚）。", .german: "Höchstens %d Fotos wählen (%d ausgewählt).", .spanish: "Elige como máximo %d fotos (%d seleccionadas).",
+        ],
+        "custompet.issue.unreadable": [
+            .simplifiedChinese: "无法读取这张图片。", .traditionalChinese: "無法讀取這張圖片。", .english: "Could not read this image.",
+            .french: "Impossible de lire cette image.", .japanese: "この画像を読み取れません。", .german: "Dieses Bild konnte nicht gelesen werden.", .spanish: "No se pudo leer esta imagen.",
+        ],
+        "custompet.issue.unsupported": [
+            .simplifiedChinese: "请使用 JPEG、PNG、HEIC、WebP、GIF 或 TIFF。", .traditionalChinese: "請使用 JPEG、PNG、HEIC、WebP、GIF 或 TIFF。", .english: "Use a JPEG, PNG, HEIC, WebP, GIF, or TIFF.",
+            .french: "Utilisez un JPEG, PNG, HEIC, WebP, GIF ou TIFF.", .japanese: "JPEG、PNG、HEIC、WebP、GIF、TIFF を使ってください。", .german: "Bitte JPEG, PNG, HEIC, WebP, GIF oder TIFF verwenden.", .spanish: "Usa JPEG, PNG, HEIC, WebP, GIF o TIFF.",
+        ],
+        "custompet.issue.too_large": [
+            .simplifiedChinese: "文件超过 25 MB。", .traditionalChinese: "檔案超過 25 MB。", .english: "This file is larger than 25 MB.",
+            .french: "Ce fichier dépasse 25 Mo.", .japanese: "ファイルが 25 MB を超えています。", .german: "Diese Datei ist größer als 25 MB.", .spanish: "Este archivo supera los 25 MB.",
+        ],
+        "custompet.issue.too_small": [
+            .simplifiedChinese: "短边至少 %d 像素（这张是 %d）。", .traditionalChinese: "短邊至少 %d 像素（這張是 %d）。", .english: "The short side must be at least %d px (this one is %d).",
+            .french: "Le petit côté doit faire au moins %d px (celui-ci fait %d).", .japanese: "短辺は %d px 以上必要です（この写真は %d）。", .german: "Die kurze Seite muss mindestens %d px haben (diese hat %d).", .spanish: "El lado corto debe tener al menos %d px (este tiene %d).",
+        ],
+        "custompet.issue.aspect": [
+            .simplifiedChinese: "请裁到长边不超过短边的 3 倍。", .traditionalChinese: "請裁到長邊不超過短邊的 3 倍。", .english: "Crop it so the long side is at most 3× the short side.",
+            .french: "Recadrez pour que le grand côté fasse au plus 3 fois le petit.", .japanese: "長辺が短辺の 3 倍以内になるように切り抜いてください。", .german: "Zuschneiden, sodass die lange Seite höchstens 3× die kurze ist.", .spanish: "Recorta para que el lado largo sea como máximo 3 veces el corto.",
+        ],
+        "custompet.issue.blurry": [
+            .simplifiedChinese: "这张照片太模糊。", .traditionalChinese: "這張照片太模糊。", .english: "This photo looks too blurry.",
+            .french: "Cette photo est trop floue.", .japanese: "この写真はぼやけすぎています。", .german: "Dieses Foto ist zu unscharf.", .spanish: "Esta foto se ve demasiado borrosa.",
+        ],
+        "custompet.issue.empty": [
+            .simplifiedChinese: "看不清主体。", .traditionalChinese: "看不清主體。", .english: "No clear subject in this photo.",
+            .french: "Pas de sujet net dans cette photo.", .japanese: "被写体がはっきりしません。", .german: "Kein klares Motiv in diesem Foto.", .spanish: "No hay un sujeto claro en esta foto.",
+        ],
+        "custompet.error.no_key": [
+            .simplifiedChinese: "请先保存 API 密钥。", .traditionalChinese: "請先儲存 API 金鑰。", .english: "Save an API key first.",
+            .french: "Enregistrez d'abord une clé API.", .japanese: "先に API キーを保存してください。", .german: "Zuerst einen API-Schlüssel sichern.", .spanish: "Guarda primero una clave API.",
+        ],
+        "custompet.error.settings": [
+            .simplifiedChinese: "请检查模型名称和接口地址。", .traditionalChinese: "請檢查模型名稱和介面位址。", .english: "Check the model name and API base URL.",
+            .french: "Vérifiez le modèle et l'URL de l'API.", .japanese: "モデル名と API の URL を確認してください。", .german: "Modellname und API-Basis-URL prüfen.", .spanish: "Revisa el modelo y la URL base de la API.",
+        ],
+        "custompet.error.moderation": [
+            .simplifiedChinese: "服务商拒绝了这次请求。", .traditionalChinese: "服務商拒絕了這次請求。", .english: "The provider declined this request.",
+            .french: "Le fournisseur a refusé cette demande.", .japanese: "提供者がこのリクエストを拒否しました。", .german: "Der Anbieter hat diese Anfrage abgelehnt.", .spanish: "El proveedor rechazó esta solicitud.",
+        ],
+        "custompet.error.network": [
+            .simplifiedChinese: "网络请求失败，可以重试。", .traditionalChinese: "網路請求失敗，可以重試。", .english: "The network request failed. You can retry.",
+            .french: "La requête réseau a échoué. Vous pouvez réessayer.", .japanese: "通信に失敗しました。再試行できます。", .german: "Die Netzwerkanfrage ist fehlgeschlagen. Erneut versuchen ist möglich.", .spanish: "Falló la solicitud de red. Puedes reintentar.",
+        ],
+        "custompet.error.provider": [
+            .simplifiedChinese: "图像服务返回了错误。", .traditionalChinese: "影像服務傳回了錯誤。", .english: "The image provider returned an error.",
+            .french: "Le fournisseur d'images a renvoyé une erreur.", .japanese: "画像サービスがエラーを返しました。", .german: "Der Bildanbieter hat einen Fehler gemeldet.", .spanish: "El proveedor de imágenes devolvió un error.",
+        ],
+        "custompet.error.validation": [
+            .simplifiedChinese: "这些帧还需要重试：%@", .traditionalChinese: "這些幀還需要重試：%@", .english: "Some frames still need another try: %@",
+            .french: "Certaines images doivent être refaites : %@", .japanese: "これらのフレームは再試行が必要です：%@", .german: "Diese Frames brauchen einen weiteren Versuch: %@", .spanish: "Estos fotogramas necesitan otro intento: %@",
+        ],
+        "custompet.error.save": [
+            .simplifiedChinese: "无法保存这只宠物。", .traditionalChinese: "無法儲存這隻寵物。", .english: "Could not save the pet.",
+            .french: "Impossible d'enregistrer le pet.", .japanese: "ペットを保存できません。", .german: "Das Pet konnte nicht gesichert werden.", .spanish: "No se pudo guardar la mascota.",
+        ],
+        "custompet.error.cancelled": [
+            .simplifiedChinese: "生成已取消。", .traditionalChinese: "生成已取消。", .english: "Generation was cancelled.",
+            .french: "La génération a été annulée.", .japanese: "生成をキャンセルしました。", .german: "Die Erzeugung wurde abgebrochen.", .spanish: "Se canceló la generación.",
+        ],
     ]
 }

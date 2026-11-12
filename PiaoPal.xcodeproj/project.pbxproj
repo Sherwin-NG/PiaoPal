@@ -45,6 +45,11 @@
 		E0E4605F6E1A3B6AD8194854 /* RenderPipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 778B44EDC6BF3351099D1C26 /* RenderPipeline.swift */; };
 		EE4D3EE48D04AC7B4010347A /* SettingsWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FFFEF7D958596D2706F2FBA /* SettingsWindow.swift */; };
 		F1553BB826A17F0F8A07CB2A /* PetMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 015942416038C8A84D91DE21 /* PetMotion.swift */; };
+		A1C0DE000000000000000002 /* CustomPetImages.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0DE000000000000000001 /* CustomPetImages.swift */; };
+		A1C0DE000000000000000004 /* CustomPetAtlas.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0DE000000000000000003 /* CustomPetAtlas.swift */; };
+		A1C0DE000000000000000006 /* CustomPetStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0DE000000000000000005 /* CustomPetStore.swift */; };
+		A1C0DE000000000000000008 /* CustomPetGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0DE000000000000000007 /* CustomPetGenerator.swift */; };
+		A1C0DE00000000000000000A /* CustomPetStudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0DE000000000000000009 /* CustomPetStudio.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -93,6 +98,11 @@
 		E845625EB622E18AE9129A07 /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		E8E85E48204F114B57676D0E /* OnboardingWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingWindow.swift; sourceTree = "<group>"; };
 		FA8F1A663A6923BED796E051 /* MarketplaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarketplaceView.swift; sourceTree = "<group>"; };
+		A1C0DE000000000000000001 /* CustomPetImages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomPetImages.swift; sourceTree = "<group>"; };
+		A1C0DE000000000000000003 /* CustomPetAtlas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomPetAtlas.swift; sourceTree = "<group>"; };
+		A1C0DE000000000000000005 /* CustomPetStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomPetStore.swift; sourceTree = "<group>"; };
+		A1C0DE000000000000000007 /* CustomPetGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomPetGenerator.swift; sourceTree = "<group>"; };
+		A1C0DE000000000000000009 /* CustomPetStudio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomPetStudio.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -160,6 +170,7 @@
 				D330BB9B7D6A0988C714CAD9 /* PetCard */,
 				C67BFFDF5307B1B6315FEB91 /* SettingsPanel */,
 				3A2D4CB751E0DB25936C1C04 /* Wrapped */,
+				A1C0DE00000000000000000C /* CustomPet */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -217,8 +228,28 @@
 			isa = PBXGroup;
 			children = (
 				A88831D5396D1122FD3A4111 /* SkinManager.swift */,
+				A1C0DE00000000000000000B /* CustomPet */,
 			);
 			path = Skins;
+			sourceTree = "<group>";
+		};
+		A1C0DE00000000000000000B /* CustomPet */ = {
+			isa = PBXGroup;
+			children = (
+				A1C0DE000000000000000003 /* CustomPetAtlas.swift */,
+				A1C0DE000000000000000007 /* CustomPetGenerator.swift */,
+				A1C0DE000000000000000001 /* CustomPetImages.swift */,
+				A1C0DE000000000000000005 /* CustomPetStore.swift */,
+			);
+			path = CustomPet;
+			sourceTree = "<group>";
+		};
+		A1C0DE00000000000000000C /* CustomPet */ = {
+			isa = PBXGroup;
+			children = (
+				A1C0DE000000000000000009 /* CustomPetStudio.swift */,
+			);
+			path = CustomPet;
 			sourceTree = "<group>";
 		};
 		C15C4076C87F8381E659062A /* Input */ = {
@@ -410,6 +441,11 @@
 				EE4D3EE48D04AC7B4010347A /* SettingsWindow.swift in Sources */,
 				487580BEB120B864B6FBFA17 /* Shader.metal in Sources */,
 				71F106047699BDCA424793F1 /* SkinManager.swift in Sources */,
+				A1C0DE000000000000000002 /* CustomPetImages.swift in Sources */,
+				A1C0DE000000000000000004 /* CustomPetAtlas.swift in Sources */,
+				A1C0DE000000000000000006 /* CustomPetStore.swift in Sources */,
+				A1C0DE000000000000000008 /* CustomPetGenerator.swift in Sources */,
+				A1C0DE00000000000000000A /* CustomPetStudio.swift in Sources */,
 				2973F46A5A9D0ABFBCC3539C /* Updater.swift in Sources */,
 				6E43177FB73F11A3B7643A16 /* WrappedView.swift in Sources */,
 				B271A2207CF85828C92C4C93 /* WrappedWindow.swift in Sources */,

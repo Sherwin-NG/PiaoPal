@@ -134,8 +134,8 @@ private struct AchievementPill: View {
 // MARK: – Skin preview
 
 struct SkinPreview: View {
-    @EnvironmentObject var lang: LanguageManager
     let skinID: String
+    let name: String
     let isSelected: Bool
 
     var body: some View {
@@ -156,7 +156,7 @@ struct SkinPreview: View {
                         .frame(width: 48, height: 48)
                 }
             }
-            Text(lang.skinName(for: skinID))
+            Text(name)
                 .font(.caption2)
                 .foregroundStyle(isSelected ? Color.piaInk : Color.piaMuted)
         }
@@ -175,9 +175,11 @@ struct SettingsView: View {
     @EnvironmentObject var lang: LanguageManager
     let onShowWrapped: () -> Void
     let onShowMarketplace: () -> Void
+    let onShowCustomPet: () -> Void
     let onShowAchievements: () -> Void
 
     @AppStorage("pet_name") private var petName: String = ""
+    @ObservedObject private var customPets = CustomPetLibrary.shared
     @State private var eggTaps = 0
     @State private var showEgg = false
     @State private var launchAtLogin: Bool = (SMAppService.mainApp.status == .enabled)
@@ -307,11 +309,11 @@ struct SettingsView: View {
                     Image(nsImage: image).interpolation(.none).frame(width: 64, height: 64)
                 }
                 VStack(alignment: .leading, spacing: 5) {
-                    TextField(lang.skinName(for: renderer.currentSkinID), text: $petName)
+                    TextField(skinTitle(renderer.currentSkinID), text: $petName)
                         .textFieldStyle(.plain)
                         .font(.system(size: 21, weight: .semibold))
                         .accessibilityLabel(lang["ob.name.title"])
-                    Text(lang.skinName(for: renderer.currentSkinID))
+                    Text(skinTitle(renderer.currentSkinID))
                         .font(.caption).foregroundStyle(Color.piaMuted)
                 }
             }
@@ -320,10 +322,10 @@ struct SettingsView: View {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12) {
                 ForEach(renderer.allSkinIDs, id: \.self) { id in
                     Button { renderer.setSkin(id) } label: {
-                        SkinPreview(skinID: id, isSelected: renderer.currentSkinID == id)
+                        SkinPreview(skinID: id, name: skinTitle(id), isSelected: renderer.currentSkinID == id)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(lang.skinName(for: id))
+                    .accessibilityLabel(skinTitle(id))
                 }
             }
             Divider().padding(.vertical, 4)
@@ -332,6 +334,17 @@ struct SettingsView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "square.grid.2x2.fill").font(.caption).foregroundStyle(Color.piaAccent)
                     Text(lang["settings.marketplace"]).font(.caption.weight(.medium))
+                }
+                .padding(.horizontal, 12).padding(.vertical, 6)
+                .background(Color.piaInk.opacity(0.07), in: Capsule())
+                .overlay(Capsule().strokeBorder(Color.piaInk.opacity(0.1), lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+
+            Button { onShowCustomPet() } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "photo.on.rectangle.angled").font(.caption).foregroundStyle(Color.piaAccent)
+                    Text(lang["settings.custom_pet"]).font(.caption.weight(.medium))
                 }
                 .padding(.horizontal, 12).padding(.vertical, 6)
                 .background(Color.piaInk.opacity(0.07), in: Capsule())
@@ -502,6 +515,10 @@ struct SettingsView: View {
         }
     }
 
+    private func skinTitle(_ id: String) -> String {
+        customPets.displayName(for: id) ?? lang.skinName(for: id)
+    }
+
     private func shareCardFromSettings() {
         let name = lang.petDisplayName(petName, skinID: renderer.currentSkinID)
         let skinID = renderer.currentSkinID
@@ -518,7 +535,7 @@ struct SettingsView: View {
             return fmt.string(from: Date())
         }()
         let exportView = CardExportView(
-            name: name, skinID: skinID, skinName: lang.skinName(for: skinID), dateStr: dateStr,
+            name: name, skinID: skinID, skinName: skinTitle(skinID), dateStr: dateStr,
             personality: lang.personality(for: skinID),
             adoptedLabel: lang["ob.card.adopted"],
             personalityLabel: lang["ob.card.personality"],
