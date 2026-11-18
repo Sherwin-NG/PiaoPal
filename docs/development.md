@@ -1,6 +1,6 @@
 # PiaoPal 开发说明
 
-当前版本为 `0.3.0`，包含 macOS 13+ 通用应用与 Windows x64/ARM64 原生应用。Windows 的运行要求、功能范围和构建入口见 [Windows 开发与使用](windows.md)。
+当前版本为 `0.4.0`，包含 macOS 13+ 通用应用与 Windows x64/ARM64 原生应用。Windows 的运行要求、功能范围和构建入口见 [Windows 开发与使用](windows.md)。
 
 ## 项目结构
 
@@ -26,10 +26,12 @@ Xcode 工程、target、scheme、product 和 Swift package 均命名为 `PiaoPal
 
 ```sh
 bash scripts/test-macos.sh
-bash scripts/package-macos.sh 0.3.0
+bash scripts/package-macos.sh 0.4.0
 ```
 
-测试在独立临时目录编译并运行，不以测试数据覆盖真实用户设置。它们检查语言识别与格式占位符、成就文案、素材尺寸与动画映射、图标、运动状态与步态时序，以及更新器的版本比较和错误处理。`Tests/MacMotion` 核对真实位移、待机、异常输入恢复及缩屏后停靠宠物重定位；`Tests/MacStats` 检查短会话跨进程保存、重复保存和并发里程累积；`Tests/MacLifecycle` 检查正常退出、未正常结束的上次会话及多实例诊断标记的隔离。后两组使用独立偏好域，均由 `scripts/test-macos.sh` 执行。
+测试在独立临时目录编译并运行，不以测试数据覆盖真实用户设置。它们检查语言识别与格式占位符、成就文案、素材尺寸与动画映射、图标、运动状态与步态时序，以及更新器的版本比较和错误处理。`Tests/MacMotion` 核对真实位移、待机、异常输入恢复及缩屏后停靠宠物重定位；`Tests/MacStats` 检查短会话跨进程保存、重复保存和并发里程累积；`Tests/MacLifecycle` 检查正常退出、未正常结束的上次会话及多实例诊断标记的隔离。统计和生命周期测试使用独立偏好域。
+
+`Tests/MacSprites` 从临时应用包加载默认角色与步态纹理，并在运行器可用的 Metal 设备上验证。`Tests/MacMotion` 还覆盖错位双屏间的追随、跨屏里程和菜单栏停靠。`Tests/MacNotifications` 模拟显示器断开与恢复，验证排队的成就通知按顺序显示。这些用例均由 `scripts/test-macos.sh` 执行。
 
 运行诊断只写本机系统日志，子系统为 `io.github.sherwinng.PiaoPal`。`lifecycle` 类别记录启动、退出请求、退出完成及上次缺少正常退出记录；该标记也可能由强制退出、断电等原因产生，不能直接判定为崩溃。`render` 类别记录显示器休眠、恢复和宠物重定位。`CVDisplayLink` 只在显示线程上累计帧间隔并切回主线程；Metal 的 `nextDrawable`、窗口 frame 和显示器几何都在主线程更新。显示配置开始变化或屏幕休眠时先停下 display link，结束后再重建。没有有效屏幕、Metal 设备被移除，或联合分辨率超过单张 drawable 上限时暂停绘制而不是让进程退出；恢复后将宠物移回实际存在的屏幕，重定位不累计步行里程。相伴里程仍写入原来的偏好键，并每分钟以及在睡眠、失去焦点和关机前原子写入 `~/Library/Application Support/PiaoPal/cat-stats.json`。
 

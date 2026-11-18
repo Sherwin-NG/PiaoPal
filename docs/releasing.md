@@ -1,6 +1,6 @@
 # PiaoPal 发版说明
 
-当前版本为 `0.3.0`，首版为 `0.0.1`。发布 macOS 13+ 通用包（arm64、x86_64）及 Windows x64、ARM64 自包含 ZIP。Mac 应用 ID 为 `io.github.sherwinng.PiaoPal`，仓库为 `Sherwin-NG/PiaoPal`；Windows 系统范围见 [Windows 说明](windows.md)。
+当前版本为 `0.4.0`，首版为 `0.0.1`。发布 macOS 13+ 通用包（arm64、x86_64）及 Windows x64、ARM64 自包含 ZIP。Mac 应用 ID 为 `io.github.sherwinng.PiaoPal`，仓库为 `Sherwin-NG/PiaoPal`；Windows 系统范围见 [Windows 说明](windows.md)。
 
 ## 准备版本
 
@@ -24,14 +24,14 @@ SHA256SUMS.txt
 
 ## GitHub Actions
 
-普通推送与 PR 运行 Mac 全套回归和通用打包、Windows x64/ARM64 原生回归与自包含打包，以及跨平台清单完整性检查。Windows 原生任务检查真实窗口和资源释放、关闭设置后继续运行、单实例唤回、默认 1 倍、跨进程设置和统计保存；结果保留为单独诊断产物。CI 保留下载产物，**不会公开发布版本**。
+向 main 推送或提交 PR 时，CI 分别在 Apple Silicon 和 Intel 运行器执行 Mac 回归，并构建 macOS 通用包。Windows x64 与 ARM64 运行器分别执行原生回归并验证自包含安装包，另有独立作业检查发布清单。Windows 原生任务检查真实窗口和资源释放、关闭设置后继续运行、单实例唤回、默认 1 倍、跨进程设置和统计保存；结果保留为单独诊断产物。CI 保留下载产物，**不会公开发布版本**。
 
 准备好提交后创建匹配版本标签，例如：
 
 ```sh
-git tag v0.3.0
+git tag v0.4.0
 git push origin main
-git push origin v0.3.0
+git push origin v0.4.0
 ```
 
 Release 工作流检查标签与两平台版本，所有平台必须构建与验证通过，汇总前复核各自清单，然后生成四个包的统一清单并创建 **GitHub Release 草稿**。手动运行时需要输入已存在的标签；构建始终使用该标签对应的提交。Windows 包随附 .NET 运行环境，禁止省略运行时文件或仅上传 exe。
@@ -39,8 +39,8 @@ Release 工作流检查标签与两平台版本，所有平台必须构建与验
 检查草稿的说明、安装体验与完整性后，由维护者完成公开发布。已获得正式发版授权时，可在核对通过后执行：
 
 ```sh
-gh release edit v0.3.0 --draft=false --latest
-gh release view v0.3.0 --json url,isDraft,isPrerelease,assets
+gh release edit v0.4.0 --draft=false --latest
+gh release view v0.4.0 --json url,isDraft,isPrerelease,assets
 ```
 
 确认版本已公开、不是预发布，恰好包含四个安装包和统一校验清单。重复运行工作流只更新草稿；已经公开发布的版本不能被工作流覆盖。修复公开版本时应递增版本并发布新标签。

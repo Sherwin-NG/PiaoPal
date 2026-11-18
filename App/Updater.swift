@@ -23,7 +23,7 @@ final class Updater: ObservableObject {
         self.session = session
         self.currentVersion = currentVersion
             ?? Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
-            ?? "0.3.0"
+            ?? "0.4.0"
     }
 
     func checkForUpdates() async {
