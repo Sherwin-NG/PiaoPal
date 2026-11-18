@@ -1,4 +1,5 @@
 import Foundation
+import CoreGraphics
 
 func naturalPet() -> PetMotion {
     let pet = PetMotion()

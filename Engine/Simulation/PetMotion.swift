@@ -1,4 +1,5 @@
 import Foundation
+import CoreGraphics
 
 // Sprite grid positions ported 1:1 from oneko.js spriteSets.
 // Each tuple is (col, row) in an 8×4 atlas, independent of cell resolution.
