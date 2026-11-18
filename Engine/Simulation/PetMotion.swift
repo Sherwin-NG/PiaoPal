@@ -201,6 +201,42 @@ final class PetMotion {
     var screenHeight: Float = 900
     private var lastScreenWidth: Float = 1440
     private var lastScreenHeight: Float = 900
+    private var screenFrames: [CGRect] = []
+
+    /// Convert AppKit's bottom-left coordinates once when the display layout changes.
+    func setScreens(_ frames: [CGRect], in union: CGRect) {
+        screenWidth = Float(union.width)
+        screenHeight = Float(union.height)
+        screenFrames = frames.map { frame in
+            CGRect(x: frame.minX - union.minX, y: union.maxY - frame.maxY,
+                   width: frame.width, height: frame.height)
+        }
+    }
+
+    /// Travel continuously across visible seams. Only jump across a gap when the
+    /// next point would disappear, landing on the display nearest the target.
+    private func visiblePoint(_ point: SIMD2<Float>, toward target: SIMD2<Float>) -> SIMD2<Float> {
+        guard screenFrames.count > 1 else { return point }
+        let location = CGPoint(x: CGFloat(point.x), y: CGFloat(point.y))
+        if screenFrames.contains(where: { $0.contains(location) }) { return point }
+        func distanceToTarget(_ frame: CGRect) -> CGFloat {
+            let dx = max(frame.minX - CGFloat(target.x), 0, CGFloat(target.x) - frame.maxX)
+            let dy = max(frame.minY - CGFloat(target.y), 0, CGFloat(target.y) - frame.maxY)
+            return dx * dx + dy * dy
+        }
+        let screen = screenFrames.min { distanceToTarget($0) < distanceToTarget($1) }!
+        let radius = CGFloat(32 * (displayScale.isFinite ? max(0.5, min(displayScale, 3)) : 1))
+        let dx = min(radius, screen.width / 2), dy = min(radius, screen.height / 2)
+        return SIMD2<Float>(Float(min(max(location.x, screen.minX + dx), screen.maxX - dx)),
+                            Float(min(max(location.y, screen.minY + dy), screen.maxY - dy)))
+    }
+
+    private func reanchorInGap(_ point: SIMD2<Float>, toward target: SIMD2<Float>) -> Bool {
+        let visible = visiblePoint(point, toward: target)
+        guard visible != point else { return false }
+        relocate(x: visible.x, y: visible.y)
+        return true
+    }
 
     private var hasValidScreen: Bool {
         screenWidth.isFinite && screenHeight.isFinite && screenWidth > 0 && screenHeight > 0
@@ -285,12 +321,16 @@ final class PetMotion {
         guard dt.isFinite, dt > 0, hasValidScreen,
               mouseX.isFinite, mouseY.isFinite else { return }
         constrainAfterScreenChange()
+        let cursor = SIMD2<Float>(mouseX, mouseY)
+        let target = visiblePoint(SIMD2<Float>(mouseX, mouseY + 20), toward: cursor)
+        // The initial (100, 100) can itself be in a gap on a staggered desktop.
+        _ = reanchorInGap(SIMD2<Float>(posX, posY), toward: target)
         if profile == .piaopiao {
             // Substeps make a delayed display callback behave like ordinary frames.
             var remaining = min(dt, 0.25)
             while remaining > 0.000001 {
                 let step = min(remaining, 1.0 / 120)
-                naturalUpdate(dt: step, mouseX: mouseX, mouseY: mouseY + 20)
+                naturalUpdate(dt: step, mouseX: target.x, mouseY: target.y)
                 remaining -= step
             }
             return
@@ -301,8 +341,7 @@ final class PetMotion {
             if isDockedToMenuBar {
                 dockedTick()
             } else {
-                // Target is the cursor; place cat slightly below cursor tip (+20 pts Y).
-                logicTick(mouseX: mouseX, mouseY: mouseY + 20)
+                logicTick(mouseX: target.x, mouseY: target.y)
             }
         }
     }
@@ -433,6 +472,7 @@ final class PetMotion {
             // walk back into the desktop instead of snapping down by eight points.
             nextPosition.y = min(max(min(verticalBounds.lowerBound, position.y), nextPosition.y),
                                  max(position.y, verticalBounds.upperBound))
+            if reanchorInGap(nextPosition, toward: target) { return false }
         }
         let actualDistance = length(nextPosition - position)
         posX = nextPosition.x
@@ -538,6 +578,8 @@ final class PetMotion {
             idleTime = min(idleTime, 7) - 1
             return
         }
+
+        if reanchorInGap(SIMD2<Float>(nextX, nextY), toward: SIMD2<Float>(mouseX, mouseY)) { return }
 
         // Face the actual travel direction when a screen edge clips one axis.
         var dir = ""

@@ -13,9 +13,16 @@ xcrun swiftc "${COMMON_FLAGS[@]}" "${LOCALIZATION[@]}" \
   Tests/MacLocalization/main.swift -o "$TEST_DIR/localization-tests"
 "$TEST_DIR/localization-tests"
 
+# Exercise the same Bundle.main lookup as the app's first frame.
+SPRITE_CONTENTS="$TEST_DIR/PiaoPal.app/Contents"
+mkdir -p "$SPRITE_CONTENTS/MacOS" "$SPRITE_CONTENTS/Resources"
+cp Info.plist "$SPRITE_CONTENTS/Info.plist"
+/usr/libexec/PlistBuddy -c 'Set :CFBundleExecutable PiaoPal' \
+  -c 'Set :CFBundleIdentifier io.github.sherwinng.PiaoPal.SpriteTests' "$SPRITE_CONTENTS/Info.plist"
+cp -R Resources/Sprites "$SPRITE_CONTENTS/Resources/Sprites"
 xcrun swiftc "${COMMON_FLAGS[@]}" Engine/Simulation/PetMotion.swift Skins/SkinManager.swift Utils/Logging.swift \
-  Tests/MacSprites/main.swift -o "$TEST_DIR/sprite-tests"
-"$TEST_DIR/sprite-tests" "$REPO_DIR"
+  Tests/MacSprites/main.swift -o "$SPRITE_CONTENTS/MacOS/PiaoPal"
+"$SPRITE_CONTENTS/MacOS/PiaoPal" "$REPO_DIR"
 
 xcrun swiftc "${COMMON_FLAGS[@]}" Engine/Simulation/PetMotion.swift \
   Tests/MacMotion/main.swift -o "$TEST_DIR/motion-tests"
@@ -29,10 +36,16 @@ xcrun swiftc "${COMMON_FLAGS[@]}" Utils/Logging.swift \
   Tests/MacLifecycle/main.swift -o "$TEST_DIR/lifecycle-tests"
 "$TEST_DIR/lifecycle-tests"
 
+MACOSX_DEPLOYMENT_TARGET=13.0 xcrun swiftc "${COMMON_FLAGS[@]}" -parse-as-library \
+  "${LOCALIZATION[@]}" App/CatStats.swift App/PiaoPalTheme.swift \
+  App/Achievements/AchievementManager.swift App/Achievements/AchievementNotificationController.swift \
+  Tests/MacNotifications/main.swift -o "$TEST_DIR/notification-tests"
+"$TEST_DIR/notification-tests"
+
 xcrun swiftc "${COMMON_FLAGS[@]}" -parse-as-library \
   App/Updater.swift Utils/Logging.swift Tests/MacUpdater/UpdaterTests.swift \
   -o "$TEST_DIR/updater-tests"
 "$TEST_DIR/updater-tests"
 
 
-echo "PASS: PiaoPal macOS localization, sprites, motion, statistics, lifecycle, and updater checks."
+echo "PASS: PiaoPal macOS localization, sprites, motion, statistics, lifecycle, notifications, and updater checks."

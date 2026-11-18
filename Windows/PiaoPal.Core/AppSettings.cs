@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace PiaoPal.Core;
 
 public sealed class AppSettings
@@ -7,7 +9,8 @@ public sealed class AppSettings
     public string Nickname { get; set; } = "";
     public double Scale { get; set; } = 1;
     public double Speed { get; set; } = 1;
-    public string Language { get; set; } = "zh-CN";
+    private static string SystemLanguage => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "zh" ? "zh-CN" : "en";
+    public string Language { get; set; } = SystemLanguage;
 
     public static bool IsKnownSkin(string? id) => id is not null && Array.IndexOf(SkinIds, id) >= 0;
 
@@ -19,6 +22,6 @@ public sealed class AppSettings
         Scale = double.IsFinite(Scale) ? Math.Clamp(Scale, .5, 3) : 1;
         Speed = double.IsFinite(Speed) && (Math.Abs(Speed - .4) < .0001
             || Math.Abs(Speed - 1) < .0001 || Math.Abs(Speed - 2.5) < .0001) ? Speed : 1;
-        if (Language is not ("zh-CN" or "en")) Language = "zh-CN";
+        if (Language is not ("zh-CN" or "en")) Language = SystemLanguage;
     }
 }

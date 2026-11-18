@@ -77,6 +77,8 @@ function Invoke-DesktopSmoke {
     Assert-Condition (@($result.checks).Count -gt 0) "Desktop $Phase did not report any checks."
     $requiredChecks = @('native_overlay_handle', 'layered_clickthrough_noactivate_toolwindow',
         'visible_topmost_without_taskbar', 'native_layered_render', 'all_bundled_sprite_sheets',
+        'unchanged_pixel_frame_skipped', 'pixel_move_redrawn', 'skin_change_redrawn', 'shown_window_redrawn',
+        'failed_refresh_retried', 'display_refresh_redrawn',
         'settings_window_created', 'closing_settings_keeps_pet_alive', 'duplicate_process_exits_normally',
         'duplicate_instance_reopens_existing_settings_without_new_session')
     if ($Phase -eq 'seed') {

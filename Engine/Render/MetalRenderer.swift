@@ -76,9 +76,6 @@ final class MetalRenderer: ObservableObject {
     private let commandQueue: MTLCommandQueue
     private var pipeline: MTLRenderPipelineState
     private var sampler: MTLSamplerState
-    // Triple-buffered per-instance buffer (single sprite).
-    private var instanceBuffers: [MTLBuffer] = []
-    private var bufferIndex = 0
 
     private let displayLink = CVDisplayLinkManager()
     private let mouseTracker = MouseTracker()
@@ -136,7 +133,6 @@ final class MetalRenderer: ObservableObject {
     // Laser pointer
     private let laserMover = LaserMover()
     private var laserTexture: MTLTexture?
-    private var laserInstanceBuffers: [MTLBuffer] = []
 
     // Achievements
     let achievementManager = AchievementManager()
@@ -178,19 +174,6 @@ final class MetalRenderer: ObservableObject {
         hostView.wantsLayer = true
         hostView.layer = metalLayer
         view = hostView
-
-        // Triple-buffered instance buffers — cat + laser dot.
-        let stride = MemoryLayout<SpriteInstanceGPU>.stride
-        for _ in 0..<3 {
-            guard let instances = dev.makeBuffer(length: stride, options: .storageModeShared),
-                  let laser = dev.makeBuffer(length: stride, options: .storageModeShared) else {
-                throw NSError(domain: "PiaoPal", code: 4, userInfo: [
-                    NSLocalizedDescriptionKey: "Unable to allocate sprite buffers"
-                ])
-            }
-            instanceBuffers.append(instances)
-            laserInstanceBuffers.append(laser)
-        }
 
         pipeline = try Self.makePipeline(device: dev, pixelFormat: metalLayer.pixelFormat)
         sampler = try Self.makeSampler(device: dev)
@@ -298,7 +281,6 @@ final class MetalRenderer: ObservableObject {
             else { return 0 }
             let simX = Float(screenPoint.x - snapshot.union.minX)
             let simY = Float(snapshot.union.maxY - screenPoint.y)
-            let menuBarBottom = Float(snapshot.union.maxY - screen.maxY + menuBarHeight)
             let hitRadius = 32 * simulationSettings.scale
             guard abs(simX - companion.posX) < hitRadius,
                   abs(simY - companion.posY) < hitRadius else { return 0 }
@@ -309,6 +291,11 @@ final class MetalRenderer: ObservableObject {
             let isDoubleClick = now - lastClickTime < 0.4
             lastClickTime = now
             guard isDoubleClick else { return 0 }
+            // A large sprite can straddle two screens with different menu-bar heights.
+            let petPoint = NSPoint(x: snapshot.union.minX + CGFloat(companion.posX),
+                                   y: snapshot.union.maxY - CGFloat(companion.posY))
+            let dockScreen = snapshot.screens.first(where: { $0.contains(petPoint) }) ?? screen
+            let menuBarBottom = Float(snapshot.union.maxY - dockScreen.maxY + menuBarHeight)
             companion.dockToMenuBar(targetY: menuBarBottom)
             return 2
         }
@@ -440,6 +427,7 @@ final class MetalRenderer: ObservableObject {
         metalLayer.drawableSize = drawable
 
         motionAccess.withMotion { companion in
+            companion.setScreens(frames, in: union)
             if let previous = displaySnapshot,
                !displayAvailable || previous.screens != frames {
                 let oldPoint = NSPoint(x: previous.union.minX + CGFloat(companion.posX),
@@ -451,8 +439,6 @@ final class MetalRenderer: ObservableObject {
                 let y = companion.isDockedToMenuBar
                     ? screen.maxY - max(32, menuBarHeight)
                     : min(max(oldPoint.y, safe.minY), safe.maxY)
-                companion.screenWidth = Float(union.width)
-                companion.screenHeight = Float(union.height)
                 companion.relocate(x: Float(x - union.minX), y: Float(union.maxY - y))
                 Log.render.info("Display changed or woke; companion restored to a visible screen")
             }
@@ -520,8 +506,6 @@ final class MetalRenderer: ObservableObject {
             let union = snapshot.union
             let settings = simulationSettings
             let profile = motionProfile(for: settings.skinID)
-            companion.screenWidth = Float(union.width)
-            companion.screenHeight = Float(union.height)
             companion.profile = profile
             companion.displayScale = settings.scale
             companion.walkingAtlasAvailable = skinManager.walkingTexture(id: settings.skinID) != nil
@@ -603,18 +587,12 @@ final class MetalRenderer: ObservableObject {
         let screenW = Float(union.width  > 0 ? union.width  : 1440)
         let screenH = Float(union.height > 0 ? union.height : 900)
 
-        // Upload instance for the cat (and optionally the laser dot).
-        let frameIndex = bufferIndex
-        bufferIndex = (bufferIndex + 1) % 3
-
-        let buf = instanceBuffers[frameIndex]
-        let ptr = buf.contents().bindMemory(to: SpriteInstanceGPU.self, capacity: 1)
         let spriteSize = 64 * frame.scale
         let pose = frame.pose
         let position = frame.position
         // Keep the lower edge planted while the authored idle/sleep pose breathes.
         let anchorOffset = SIMD2<Float>(0, -(pose.scale.y - 1) * spriteSize * 0.5)
-        ptr[0] = SpriteInstanceGPU(
+        var catInstance = SpriteInstanceGPU(
             position: position + anchorOffset,
             size:     SIMD2<Float>(spriteSize, spriteSize) * pose.scale,
             uvRect:   pose.uvRect
@@ -638,25 +616,23 @@ final class MetalRenderer: ObservableObject {
         enc.setVertexBytes(&uni, length: MemoryLayout<Uniforms>.size, index: 1)
 
         // Draw cat
-        enc.setVertexBuffer(buf, offset: 0, index: 0)
         let texture = pose.usesWalkingAtlas
             ? skinManager.walkingTexture(id: frame.skinID)
             : skinManager.texture(id: frame.skinID)
         if let tex = texture {
+            enc.setVertexBytes(&catInstance, length: MemoryLayout<SpriteInstanceGPU>.stride, index: 0)
             enc.setFragmentTexture(tex, index: 0)
             enc.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
         }
 
-        // Draw laser dot (rendered under/before the cat so cat runs on top)
+        // Draw laser dot
         if let laserPosition = frame.laserPosition, let laserTex = laserTexture {
-            let laserBuf = laserInstanceBuffers[frameIndex]
-            let lptr = laserBuf.contents().bindMemory(to: SpriteInstanceGPU.self, capacity: 1)
-            lptr[0] = SpriteInstanceGPU(
+            var laserInstance = SpriteInstanceGPU(
                 position: laserPosition,
                 size:     SIMD2<Float>(14, 14),
                 uvRect:   SIMD4<Float>(0, 0, 1, 1)
             )
-            enc.setVertexBuffer(laserBuf, offset: 0, index: 0)
+            enc.setVertexBytes(&laserInstance, length: MemoryLayout<SpriteInstanceGPU>.stride, index: 0)
             enc.setFragmentTexture(laserTex, index: 0)
             enc.drawPrimitives(type: .triangleStrip, vertexStart: 0, vertexCount: 4)
         }

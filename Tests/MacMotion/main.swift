@@ -476,6 +476,68 @@ relocated.relocate(x: .infinity, y: .nan)
 near(relocated.posX, 500, "Invalid relocation is ignored")
 near(relocated.posY, 400, "Invalid relocation preserves a visible position")
 
+// In simulation coordinates the right display starts 360 points below the left.
+// The previous union-only clamp let PiaoPiao stop at (1963, 70), entirely in the gap.
+let staggeredScreens = [CGRect(x: -1920, y: 0, width: 1920, height: 1080),
+                        CGRect(x: 0, y: 0, width: 1280, height: 720)]
+let desktop = staggeredScreens[0].union(staggeredScreens[1])
+for profile in [PetMotionProfile.piaopiao, .legacy] {
+    for scale: Float in [0.5, 1, 3] {
+        let pet = PetMotion()
+        pet.profile = profile
+        pet.displayScale = scale
+        pet.setScreens(staggeredScreens, in: desktop)
+        pet.relocate(x: 2700, y: 400)
+        var reported: Float = 0
+        pet.onStep = { reported += $0 }
+        for _ in 0..<1200 {
+            reported = 0
+            pet.update(dt: 1 / 60, mouseX: 1919, mouseY: 30)
+            let centre = CGPoint(x: desktop.minX + CGFloat(pet.posX), y: desktop.maxY - CGFloat(pet.posY))
+            precondition(staggeredScreens.contains { $0.contains(centre) },
+                         "Every frame of a staggered-screen crossing stays on a physical display")
+            precondition(reported < 16.01, "Gap recovery must not add its jump to walking distance")
+        }
+        precondition(pet.posX < 1920 && pet.posY < 112, "The pet must reach the cursor's screen")
+        let settled = SIMD2<Float>(pet.posX, pet.posY)
+        run(pet, seconds: 1, x: 1919, y: 30)
+        precondition(SIMD2<Float>(pet.posX, pet.posY) == settled)
+    }
+
+    // The visible seam lower down in this same layout still permits an ordinary walk.
+    let crossing = PetMotion()
+    crossing.profile = profile
+    crossing.setScreens(staggeredScreens, in: desktop)
+    crossing.relocate(x: 1700, y: 800)
+    for _ in 0..<360 {
+        let previous = crossing.posX
+        crossing.update(dt: 1 / 60, mouseX: 2200, mouseY: 780)
+        precondition(abs(crossing.posX - previous) < 16.01, "A shared seam must not teleport the pet")
+    }
+    precondition(crossing.posX > 2100)
+    crossing.dockToMenuBar(targetY: 384)
+    run(crossing, seconds: 6, x: 10, y: 10)
+    near(crossing.posY, 384, "Docked pet rests at its own display's menu bar")
+    precondition(crossing.isDockedToMenuBar && crossing.currentAnimation == .sleeping)
+
+    // A shorter display on the left leaves gaps above and below it. The initial
+    // position and the usual +20 offset under a cursor at its bottom can both be invisible.
+    let short = CGRect(x: -1280, y: 180, width: 1280, height: 720)
+    let tall = CGRect(x: 0, y: 0, width: 1920, height: 1080)
+    let startup = PetMotion()
+    startup.profile = profile
+    startup.setScreens([short, tall], in: short.union(tall))
+    var startupDistance: Float = 0
+    startup.onStep = { startupDistance += $0 }
+    startup.update(dt: 1 / 60, mouseX: 100, mouseY: 899)
+    precondition(startup.posY >= 180 && startup.posY <= 900 && startupDistance == 0)
+    run(startup, seconds: 10, x: 100, y: 899)
+    let before = startup.posY
+    run(startup, seconds: 2, x: 100, y: 899)
+    near(startup.posY, before, "A cursor's below-tip offset in a gap must settle stably")
+    precondition(startup.posX < 1280 && startup.posY > 800 && startup.posY < 900)
+}
+
 // Animation indexing must fail safely even if a caller supplies an invalid or
 // enormous clock/phase instead of trapping on Float-to-Int conversion.
 for profile in [PetMotionProfile.piaopiao, .legacy] {

@@ -18,6 +18,7 @@ internal sealed class PetApplicationContext : ApplicationContext
     private readonly Icon appIcon;
     private readonly System.Windows.Forms.Timer timer=new() {Interval=16};
     private readonly Stopwatch clock=Stopwatch.StartNew();
+    private Point? lastDpiPosition;
     private readonly List<string> smokeChecks=[];
     private SettingsWindow? settings;
     private ContextMenuStrip? menu;
@@ -42,6 +43,7 @@ internal sealed class PetApplicationContext : ApplicationContext
         Sprites=new SpriteAtlas();
         appIcon=new Icon(Path.Combine(AppContext.BaseDirectory,"app.ico"));
         overlay=new PetOverlay();
+        overlay.DpiChanged += (_, _) => lastDpiPosition = null;
         _=Dispatcher.Handle;
         tray=new NotifyIcon {Icon=appIcon,Text="PiaoPal",Visible=true};
         tray.DoubleClick+=(_,_)=>ShowSettings();
@@ -176,14 +178,19 @@ internal sealed class PetApplicationContext : ApplicationContext
     private void UpdateDpi(DesktopPoint position)
     {
         if(!position.IsValid) return;
-        var point=new NativeMethods.Point((int)position.X,(int)position.Y);
-        nint monitor=NativeMethods.MonitorFromPoint(point,2);
+        var point = new Point((int)position.X, (int)position.Y);
+        if (lastDpiPosition == point) return;
+        nint monitor=NativeMethods.MonitorFromPoint(new NativeMethods.Point(point.X, point.Y),2);
         if(monitor!=0 && NativeMethods.GetDpiForMonitor(monitor,0,out uint dpi,out _)==0 && dpi>=48 && dpi<=768)
+        {
             Motion.PixelsPerDip=dpi/96d;
+            lastDpiPosition = point;
+        }
     }
 
     private void RefreshScreens(bool locate=false)
     {
+        lastDpiPosition = null;
         var screens=Screen.AllScreens.Select(s=>s.WorkingArea).Where(r=>r.Width>0 && r.Height>0)
             .Select(r=>new DesktopRect(r.X,r.Y,r.Width,r.Height)).ToArray();
         Motion.SetScreens(screens);
@@ -196,8 +203,9 @@ internal sealed class PetApplicationContext : ApplicationContext
         }
         try
         {
+            UpdateDpi(Motion.Position);
             int size=(int)Math.Round(64*Motion.Scale*Motion.PixelsPerDip);
-            _=overlay.Present(Sprites.Frame(Store.Settings.SkinId,Motion.GetPose(),size),Motion.Position,size);
+            _=overlay.Present(Sprites.Frame(Store.Settings.SkinId,Motion.GetPose(),size),Motion.Position,size,force: true);
         }
         catch(Exception error) { HandleFrameError(error); }
         log.Write("display_layout_refreshed screens="+screens.Length);
@@ -314,6 +322,34 @@ internal sealed class PetApplicationContext : ApplicationContext
         if(!value) throw new InvalidOperationException("Smoke check failed: "+name);
         smokeChecks.Add(name);
     }
+    private void CheckOverlayUpdates()
+    {
+        var idle = SpriteAnimation.GetPose(PetAnimation.Idle, 0, 0, "classic");
+        var image = Sprites.Frame("classic", idle, 64);
+        var position = new DesktopPoint(Math.Round(Motion.Position.X), Math.Round(Motion.Position.Y));
+        overlay.Present(image, position, 64);
+        long initial = overlay.FramesRendered;
+        bool unchanged = overlay.Present(image, position with { X = position.X + .1 }, 64);
+        Check(unchanged && overlay.FramesRendered == initial, "unchanged_pixel_frame_skipped");
+
+        position = position with { X = position.X + 1 };
+        overlay.Present(image, position, 64);
+        Check(overlay.FramesRendered == initial + 1, "pixel_move_redrawn");
+        var otherSkin = Sprites.Frame("dog", idle, 64);
+        overlay.Present(otherSkin, position, 64);
+        Check(overlay.FramesRendered == initial + 2, "skin_change_redrawn");
+        overlay.Hide();
+        overlay.Show();
+        overlay.Present(otherSkin, position, 64);
+        Check(overlay.FramesRendered == initial + 3, "shown_window_redrawn");
+        bool invalidPlacement = overlay.Present(otherSkin, position with { X = double.NaN }, 64, force: true);
+        bool recovered = overlay.Present(otherSkin, position, 64);
+        Check(!invalidPlacement && recovered && overlay.FramesRendered == initial + 4, "failed_refresh_retried");
+        RefreshScreens();
+        long beforeRefresh = overlay.FramesRendered;
+        RefreshScreens();
+        Check(overlay.FramesRendered == beforeRefresh + 1, "display_refresh_redrawn");
+    }
     private void SmokeTick(double elapsed)
     {
         if(smokeCompleted) return;
@@ -323,6 +359,7 @@ internal sealed class PetApplicationContext : ApplicationContext
             Check((NativeMethods.GetWindowLong(overlay.Handle,NativeMethods.GwlExStyle)&PetOverlay.RequiredStyles)==PetOverlay.RequiredStyles,"layered_clickthrough_noactivate_toolwindow");
             Check(!overlay.ShowInTaskbar && overlay.TopMost && overlay.Visible,"visible_topmost_without_taskbar");
             Check(overlay.FramesRendered>0,"native_layered_render");
+            CheckOverlayUpdates();
             Check(Sprites.SheetCount==7,"all_bundled_sprite_sheets");
             foreach(string skin in SpriteAtlas.SkinIds)
             {

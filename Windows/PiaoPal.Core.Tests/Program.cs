@@ -1,4 +1,5 @@
 using PiaoPal.Core;
+using System.Globalization;
 using System.Text.Json;
 
 var checks = 0;
@@ -152,6 +153,22 @@ Directory.CreateDirectory(temp);
 var fixedDay = new DateTimeOffset(2026, 11, 6, 12, 0, 0, TimeSpan.FromHours(8));
 try
 {
+    var originalUiCulture = CultureInfo.CurrentUICulture;
+    try
+    {
+        foreach (var (culture, expected) in new[] { ("en-US", "en"), ("zh-CN", "zh-CN"), ("zh-TW", "zh-CN"), ("fr-FR", "en") })
+        {
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(culture);
+            var profile = Path.Combine(temp, culture);
+            using (var fresh = new SettingsStore(profile, fixedDay))
+                Check(fresh.Settings.Language == expected, $"fresh {culture} profile selects {expected}");
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(expected == "en" ? "zh-CN" : "en-US");
+            using var reopened = new SettingsStore(profile, fixedDay);
+            Check(reopened.Settings.Language == expected, $"saved {expected} survives a system language change");
+        }
+    }
+    finally { CultureInfo.CurrentUICulture = originalUiCulture; }
+
     var storage = Path.Combine(temp, "normal");
     using (var store = new SettingsStore(storage, fixedDay))
     {
@@ -250,12 +267,13 @@ try
     var normalize = Path.Combine(temp, "normalize");
     using (var store = new SettingsStore(normalize, fixedDay))
     {
+        var defaultLanguage = store.Settings.Language;
         store.Settings.Scale = double.NaN; store.Settings.Speed = double.PositiveInfinity;
         store.Settings.SkinId = "missing"; store.Settings.Nickname = new string('x', 70);
         store.Settings.Language = "unknown";
         store.Save();
         Check(store.Settings.Scale == 1 && store.Settings.Speed == 1 && store.Settings.SkinId == "piaopiao"
-            && store.Settings.Nickname.Length == 40 && store.Settings.Language == "zh-CN", "unsafe preferences normalize before persistence");
+            && store.Settings.Nickname.Length == 40 && store.Settings.Language == defaultLanguage, "unsafe preferences normalize before persistence");
         store.AddDistance(2.5 / .00027);
         Check(store.Stats.Level == 2, "level matches macOS distance threshold");
         Near(store.Stats.XpProgress, 0, .000001, "level threshold resets XP progress");

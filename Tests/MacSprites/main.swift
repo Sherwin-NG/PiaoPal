@@ -88,14 +88,24 @@ for row in 0..<8 {
 }
 print("PASS: 8 directions × 4 distinct walking phases with transparent cell margins")
 
-let manager = SkinManager()
+let managerWithoutDevice = SkinManager()
 var missingDeviceFailed = false
-manager.loadSkinFromURL(id: "missing-device", url: atlasURL) { missingDeviceFailed = !$0 }
+managerWithoutDevice.loadSkinFromURL(id: "missing-device", url: atlasURL) { missingDeviceFailed = !$0 }
 precondition(missingDeviceFailed, "A missing GPU must complete with failure")
-if let device = MTLCreateSystemDefaultDevice() {
+let devices = MTLCopyAllDevices()
+if devices.isEmpty {
+    print("SKIP: Metal texture upload requires a GPU; file/animation checks passed")
+}
+for device in devices {
+    let manager = SkinManager()
     manager.setDevice(device)
+    try manager.loadDefaultSkin()
+    let baseTexture = manager.texture(id: SkinManager.defaultSkinID)
+    let walkingTexture = manager.walkingTexture(id: SkinManager.defaultSkinID)
+    precondition(baseTexture?.width == 512 && baseTexture?.height == 256)
+    precondition(walkingTexture?.width == 256 && walkingTexture?.height == 512)
     for (id, url, expected) in [
-        ("piaopiao", atlasURL, true),
+        ("classic", repo.appendingPathComponent("Resources/Sprites/classic.gif"), true),
         ("invalid", repo.appendingPathComponent("Info.plist"), false)
     ] {
         let completed = DispatchSemaphore(value: 0)
@@ -104,15 +114,12 @@ if let device = MTLCreateSystemDefaultDevice() {
         precondition(completed.wait(timeout: .now() + 5) == .success, "Skin loader must always finish")
         precondition(actual == expected, "Decode result must reach the caller")
     }
-    precondition(manager.texture(id: "piaopiao")?.width == 512)
-    precondition(manager.texture(id: "piaopiao")?.height == 256)
+    precondition(manager.texture(id: "classic")?.width == 256)
     precondition(manager.texture(id: "invalid") == nil)
     let previewID = try manager.loadPreviewSkin(from: atlasURL)
     precondition(manager.walkingTexture(id: previewID)?.width == 256)
     precondition(manager.walkingTexture(id: previewID)?.height == 512)
     precondition(manager.walkingTexture(id: "classic") == nil,
                  "PiaoPiao's walking sheet must not leak into other companions")
-    print("PASS: Metal PNG loading and invalid-image failure callbacks")
-} else {
-    print("SKIP: Metal texture upload requires a GPU; file/animation checks passed")
+    print("PASS: startup sprite textures, asynchronous skin loading, and preview textures on \(device.name)")
 }

@@ -199,7 +199,7 @@ final class SkinManager {
         let desc = MTLTextureDescriptor.texture2DDescriptor(
             pixelFormat: .rgba8Unorm, width: w, height: h, mipmapped: false)
         desc.usage = .shaderRead
-        desc.storageMode = .shared
+        // Metal chooses managed textures on Intel Macs and shared textures on Apple silicon.
         guard let tex = device.makeTexture(descriptor: desc) else { return nil }
 
         var pixels = [UInt8](repeating: 0, count: w * h * 4)
